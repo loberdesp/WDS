@@ -6,6 +6,7 @@
 #include <Qt3DCore/QEntity>
 #include <QPainter>
 #include <Qt3DCore/QTransform>
+#include <QLineEdit>
 
 class PlatformViewer : public QWidget
 {
@@ -18,6 +19,16 @@ private:
     Qt3DExtras::Qt3DWindow *m_view;
     QWidget *m_container;
     Qt3DCore::QTransform *m_platformTransform; // Add this to store the platform's transform
+
+    Qt3DCore::QEntity *m_ballEntity;
+    QVector3D m_ballVelocity;
+    Qt3DCore::QTransform *m_ballTransform;
+    QLineEdit *m_gravityInput;
+    QTimer *m_updateTimer;
+
+private slots:
+    void updateBallPhysics();
+    void resetBall();
 
 };
 
