@@ -9,6 +9,8 @@
 #include <QLabel>
 #include "platformviewer.h"
 #include "imudisplay.h"
+#include "hexagon.h"
+#include "ImuGForce.h"
 
 class MainWindow : public QMainWindow
 {
@@ -34,6 +36,9 @@ private:
     PlatformViewer *platformViewer;
 
     IMUDisplay *imuDisplay;  // Replace your old QLabels with this
+    ImuGForceWidget *gForceWidget;
+    HexagonBars *hexagonBars;
+
 
 
 signals:

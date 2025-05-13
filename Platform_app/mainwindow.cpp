@@ -1,3 +1,10 @@
+/**
+ * @file    mainwindow.cpp
+ * @brief   Implementation of main application window
+ * @author  Piotr Siembab
+ * @date    18.04.2025
+ */
+
 #include "mainwindow.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -5,23 +12,34 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QByteArray>
-#include <QApplication>  // Add this at the top with other includes
+#include <QApplication>
 #include <QtGlobal>
 
+/**
+ * @brief Constructs the main application window
+ * @param parent Parent widget (optional)
+ *
+ * Initializes:
+ * - Serial port interface
+ * - 3D visualization widget
+ * - IMU data display
+ * - Control panel with port selection
+ */
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     serial(new QSerialPort(this)),
     platformViewer(new PlatformViewer())
 {
-    // Create central widget
     QWidget *centralWidget = new QWidget(this);
-    QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
+    QHBoxLayout *mainLayout = new QHBoxLayout(centralWidget);
+
+    // === LEFT SIDE: Control Panel + Platform Viewer ===
+    QVBoxLayout *leftLayout = new QVBoxLayout();
 
     // 1. Control panel
     QWidget *controlPanel = new QWidget();
     QHBoxLayout *controlLayout = new QHBoxLayout(controlPanel);
 
-    // Create controls
     refreshButton = new QPushButton("Ports ▼");
     refreshButton->setFixedWidth(80);
     refreshButton->setToolTip("Refresh available COM ports");
@@ -36,16 +54,15 @@ MainWindow::MainWindow(QWidget *parent)
     statusLabel = new QLabel("Status: Disconnected");
     statusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
 
-
-
-    // Add to control layout
     controlLayout->addWidget(refreshButton);
     controlLayout->addWidget(portComboBox);
     controlLayout->addWidget(connectButton);
     controlLayout->addWidget(statusLabel);
     controlLayout->addStretch();
 
-    // 2. Bordered 3D view
+    leftLayout->addWidget(controlPanel);
+
+    // 2. Platform viewer inside a frame
     QFrame *modelFrame = new QFrame();
     modelFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     modelFrame->setLineWidth(2);
@@ -54,24 +71,31 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *frameLayout = new QVBoxLayout(modelFrame);
     frameLayout->addWidget(platformViewer);
 
-    //imu data display
+    leftLayout->addWidget(modelFrame);
+    leftLayout->addStretch();
+
+    // === RIGHT SIDE: HexagonBars + IMU Display ===
+    QVBoxLayout *rightLayout = new QVBoxLayout();
+
+    hexagonBars = new HexagonBars();
+    hexagonBars->setFixedSize(200, 200);
+
     imuDisplay = new IMUDisplay();
 
-    // 3. Add to main layout
-    mainLayout->addWidget(controlPanel);
-    mainLayout->addWidget(modelFrame, 0, Qt::AlignHCenter);
-    mainLayout->addStretch();
-    mainLayout->addWidget(imuDisplay);
+    rightLayout->addWidget(hexagonBars, 0, Qt::AlignHCenter);
+    rightLayout->addWidget(imuDisplay);
+    rightLayout->addStretch();
 
-    // Final setup
+    // Combine into main layout
+    mainLayout->addLayout(leftLayout);
+    mainLayout->addLayout(rightLayout);
+
     setCentralWidget(centralWidget);
     resize(800, 700);
 
-    // Initial refresh
     refreshPorts();
     updateConnectionStatus(false);
 
-    // Connections
     connect(refreshButton, &QPushButton::clicked, this, &MainWindow::refreshPorts);
     connect(connectButton, &QPushButton::clicked, this, &MainWindow::toggleConnection);
     connect(serial, &QSerialPort::readyRead, this, &MainWindow::readSerialData, Qt::QueuedConnection);
@@ -80,30 +104,23 @@ MainWindow::MainWindow(QWidget *parent)
     });
 }
 
-
 void MainWindow::readSerialData() {
     static QByteArray buffer;
-
     buffer += serial->readAll();
 
-    // Process complete lines (ending with \r\n or \n)
     while (true) {
         const int lineEnd = buffer.indexOf('\n');
-        if (lineEnd == -1) break;  // No complete line yet
+        if (lineEnd == -1) break;
 
-        // Extract line and remove from buffer
         QByteArray line = buffer.left(lineEnd).trimmed();
         buffer.remove(0, lineEnd + 1);
-
         if (line.isEmpty()) continue;
 
-        // Parse IMU data with CRC verification
         if (line.startsWith("IMU:") && line.contains('*')) {
             const int crcPos = line.lastIndexOf('*');
-            const QByteArray dataPart = line.mid(4, crcPos - 4);  // Skip "IMU:"
+            const QByteArray dataPart = line.mid(4, crcPos - 4);
             const QByteArray crcPart = line.mid(crcPos + 1);
 
-            // Verify CRC
             bool crcOk;
             const uint8_t receivedCrc = crcPart.toUInt(&crcOk, 16);
             if (!crcOk || crcPart.length() != 2) {
@@ -111,40 +128,43 @@ void MainWindow::readSerialData() {
                 continue;
             }
 
-            // Parse data values
             const QList<QByteArray> values = dataPart.split(',');
-            if (values.size() != 6) {
+            if (values.size() != 7) {
                 qWarning() << "Invalid data field count:" << line;
                 continue;
             }
 
-            const uint8_t calculatedCrc = calculateCrc8(values);
+            const uint8_t calculatedCrc = calculateCrc8(values.mid(1, 6));
             if (receivedCrc != calculatedCrc) {
                 qWarning() << "CRC mismatch. Received:" << receivedCrc
                            << "Calculated:" << calculatedCrc;
                 continue;
             }
 
-            bool conversionOk[6];
-            const int16_t fax = values[0].toInt(&conversionOk[0]);
-            const int16_t fay = values[1].toInt(&conversionOk[1]);
-            const int16_t faz = values[2].toInt(&conversionOk[2]);
-            const int16_t fgx = values[3].toInt(&conversionOk[3]);
-            const int16_t fgy = values[4].toInt(&conversionOk[4]);
-            const int16_t fgz = values[5].toInt(&conversionOk[5]);
+            bool conversionOk[7];
+            const int imuId = values[0].toInt(&conversionOk[0]);
+            const int16_t fax = values[1].toInt(&conversionOk[1]);
+            const int16_t fay = values[2].toInt(&conversionOk[2]);
+            const int16_t faz = values[3].toInt(&conversionOk[3]);
+            const int16_t fgx = values[4].toInt(&conversionOk[4]);
+            const int16_t fgy = values[5].toInt(&conversionOk[5]);
+            const int16_t fgz = values[6].toInt(&conversionOk[6]);
 
-            if (!conversionOk[0] || !conversionOk[1] || !conversionOk[2] ||
-                !conversionOk[3] || !conversionOk[4] || !conversionOk[5]) {
+            if (!std::all_of(std::begin(conversionOk), std::end(conversionOk), [](bool ok) { return ok; })) {
                 qWarning() << "Invalid IMU data conversion:" << line;
                 continue;
             }
 
-            // Update UI thread-safely
-            QMetaObject::invokeMethod(this, [this, fax, fay, faz, fgx, fgy, fgz]() {
-                imuDisplay->updateValues(fax, fay, faz, fgx, fgy, fgz);
-                platformViewer->updatePlatformOrientation(fax, fay, faz);
+            QMetaObject::invokeMethod(this, [=]() {
+                if (imuId == 1) {
+                    imuDisplay->updateValues(fax, fay, faz, fgx, fgy, fgz);
+                    platformViewer->updatePlatformOrientation(fax, fay, faz);
+                } else if (imuId == 2) {
+                    // imuDisplay2->updateValues(...)
+                } else {
+                    qWarning() << "Unknown IMU ID:" << imuId;
+                }
             }, Qt::QueuedConnection);
-
         } else {
             qDebug() << "Received non-IMU data:" << line;
         }
@@ -152,10 +172,9 @@ void MainWindow::readSerialData() {
 }
 
 uint8_t MainWindow::calculateCrc8(const QList<QByteArray>& data) {
-    uint8_t crc = 0xFF;  // Initial value
-    const uint8_t poly = 0x31;  // Polynomial 0x31 (CRC-8-Dallas/Maxim)
+    uint8_t crc = 0xFF;
+    const uint8_t poly = 0x31;
 
-    // Convert each int16 value to little-endian bytes
     for (const QByteArray& valStr : data) {
         bool ok;
         int16_t value = valStr.toInt(&ok);
@@ -164,11 +183,9 @@ uint8_t MainWindow::calculateCrc8(const QList<QByteArray>& data) {
             return 0;
         }
 
-        // Get little-endian bytes
         uint8_t lsb = static_cast<uint8_t>(value & 0xFF);
         uint8_t msb = static_cast<uint8_t>((value >> 8) & 0xFF);
 
-        // Process both bytes
         for (uint8_t byte : {lsb, msb}) {
             crc ^= byte;
             for (uint8_t j = 0; j < 8; j++) {
@@ -178,7 +195,6 @@ uint8_t MainWindow::calculateCrc8(const QList<QByteArray>& data) {
     }
     return crc;
 }
-
 
 void MainWindow::refreshPorts()
 {
