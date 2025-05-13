@@ -19,7 +19,7 @@ float HexagonBars::getBarValue(int index) const {
 
 void HexagonBars::calculateHexagon() {
     hexagonPoints.clear();
-    float radius = 60; // You can scale this based on widget size
+    float radius = 100; // You can scale this based on widget size
     float angleDeg = 0;
     for (int i = 0; i < 6; ++i) {
         float angleRad = qDegreesToRadians(angleDeg);
@@ -69,8 +69,8 @@ void HexagonBars::drawHeightIndicators(QPainter &painter, const QVector<float>& 
 }
 
 void HexagonBars::drawBars(QPainter &painter) {
-    float barLength = 60;  // Length from outer hex point toward center
-    float barWidth = 10;
+    float barLength = 50;  // Length from outer hex point toward center
+    float barWidth = 15;
     QVector<QPointF> barTips;
 
     // Simulate "height" changes for expanded bars
@@ -137,7 +137,7 @@ QColor HexagonBars::getBarColor(float value) {
         return QColor(red, green, 0);  // Return the color as RGB
     } else {
         // Yellow to Red (value 0.5 to 1.0)
-        int red = static_cast<int>(510 * (value - 0.5f)); // Red increases from 0 to 255
+        int red = 255; // Red increases from 0 to 255
         int green = static_cast<int>(255 - 510 * (value - 0.5f)); // Green decreases from 255 to 0
         return QColor(red, green, 0);  // Return the color as RGB
     }

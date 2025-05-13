@@ -179,8 +179,8 @@ void MainWindow::readSerialData() {
                     imuDisplay->updateValues(fax, fay, faz, fgx, fgy, fgz);
                     platformViewer->updatePlatformOrientation(fax, fay, faz);
 
-                    float gX = static_cast<float>(fax) / 8195.0f;
-                    float gY = static_cast<float>(fay) / 8195.0f;
+                    float gX = static_cast<float>(fax) / 16390.0f;
+                    float gY = static_cast<float>(fay) / 16390.0f;
 
                     gForceWidget->setAcceleration(gX, gY);
                 } else if (imuId == 2) {

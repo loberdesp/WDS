@@ -61,7 +61,7 @@ void ImuGForceWidget::paintEvent(QPaintEvent *) {
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(dotColor);
-    painter.drawEllipse(QPointF(gx, gy), 6, 6);
+    painter.drawEllipse(QPointF(gx, gy), 10, 10);
 
     // Optional center point
     painter.setBrush(Qt::white);
