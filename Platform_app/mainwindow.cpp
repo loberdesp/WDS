@@ -14,6 +14,8 @@
 #include <QByteArray>
 #include <QApplication>
 #include <QtGlobal>
+#include <QTimer>
+#include <cmath>
 
 /**
  * @brief Constructs the main application window
@@ -80,9 +82,26 @@ MainWindow::MainWindow(QWidget *parent)
     hexagonBars = new HexagonBars();
     hexagonBars->setFixedSize(200, 200);
 
+    QTimer* timer = new QTimer(this);
+    int timeStep = 0;
+
+    connect(timer, &QTimer::timeout, this, [=]() mutable {
+        for (int i = 0; i < 6; ++i) {
+            float value = 0.5f + 0.4f * std::sin((timeStep + i * 20) * 0.05);  // Smooth cycling
+            hexagonBars->setBarValue(i, value);
+        }
+        timeStep++;
+    });
+    timer->start(30);  // Approx ~33 FPS
+
+    gForceWidget = new ImuGForceWidget();
+    gForceWidget->setAcceleration(0, 0);
+
     imuDisplay = new IMUDisplay();
 
+
     rightLayout->addWidget(hexagonBars, 0, Qt::AlignHCenter);
+    rightLayout->addWidget(gForceWidget);
     rightLayout->addWidget(imuDisplay);
     rightLayout->addStretch();
 
@@ -159,6 +178,11 @@ void MainWindow::readSerialData() {
                 if (imuId == 1) {
                     imuDisplay->updateValues(fax, fay, faz, fgx, fgy, fgz);
                     platformViewer->updatePlatformOrientation(fax, fay, faz);
+
+                    float gX = static_cast<float>(fax) / 8195.0f;
+                    float gY = static_cast<float>(fay) / 8195.0f;
+
+                    gForceWidget->setAcceleration(gX, gY);
                 } else if (imuId == 2) {
                     // imuDisplay2->updateValues(...)
                 } else {
