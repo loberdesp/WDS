@@ -82,17 +82,17 @@ MainWindow::MainWindow(QWidget *parent)
     hexagonBars = new HexagonBars();
     hexagonBars->setFixedSize(200, 200);
 
-    QTimer* timer = new QTimer(this);
-    int timeStep = 0;
+    // QTimer* timer = new QTimer(this);
+    // int timeStep = 0;
 
-    connect(timer, &QTimer::timeout, this, [=]() mutable {
-        for (int i = 0; i < 6; ++i) {
-            float value = 0.5f + 0.4f * std::sin((timeStep + i * 20) * 0.05);  // Smooth cycling
-            hexagonBars->setBarValue(i, value);
-        }
-        timeStep++;
-    });
-    timer->start(30);  // Approx ~33 FPS
+    // connect(timer, &QTimer::timeout, this, [=]() mutable {
+    //     for (int i = 0; i < 6; ++i) {
+    //         float value = 0.5f + 0.4f * std::sin((timeStep + i * 20) * 0.05);  // Smooth cycling
+    //         hexagonBars->setBarValue(i, value);
+    //     }
+    //     timeStep++;
+    // });
+    // timer->start(30);  // Approx ~33 FPS
 
     gForceWidget = new ImuGForceWidget();
     gForceWidget->setAcceleration(0, 0);
@@ -189,9 +189,53 @@ void MainWindow::readSerialData() {
                     qWarning() << "Unknown IMU ID:" << imuId;
                 }
             }, Qt::QueuedConnection);
-        } else {
-            qDebug() << "Received non-IMU data:" << line;
-        }
+        } else if (line.startsWith("S:") && line.contains('*')) {
+                const int crcPos = line.lastIndexOf('*');
+                const QByteArray dataPart = line.mid(2, crcPos - 2);  // Skip "S:"
+                const QByteArray crcPart = line.mid(crcPos + 1);
+
+                bool crcOk;
+                const uint8_t receivedCrc = crcPart.toUInt(&crcOk, 16);
+                if (!crcOk || crcPart.length() != 2) {
+                    qWarning() << "Invalid CRC format in servo line:" << line;
+                    continue;
+                }
+
+                const QList<QByteArray> values = dataPart.split(',');
+                if (values.size() != 6) {
+                    qWarning() << "Invalid servo data field count:" << line;
+                    continue;
+                }
+
+                uint8_t calculatedCrc = calculateCrc8(values);  // reuse your CRC-8 function
+                if (receivedCrc != calculatedCrc) {
+                    qWarning() << "Servo CRC mismatch. Received:" << receivedCrc
+                               << "Calculated:" << calculatedCrc;
+                    continue;
+                }
+
+                bool conversionOk[6];
+                QVector<int> servoAngles(6);
+                for (int i = 0; i < 6; ++i) {
+                    servoAngles[i] = values[i].toInt(&conversionOk[i]);
+                }
+
+                if (!std::all_of(std::begin(conversionOk), std::end(conversionOk), [](bool ok) { return ok; })) {
+                    qWarning() << "Invalid servo angle conversion:" << line;
+                    continue;
+                }
+
+                // Safely dispatch update to GUI
+                QMetaObject::invokeMethod(this, [=]() {
+                    for(int i=0;i<6;i++) {
+                        hexagonBars->setBarValue(i, (servoAngles[i]+90.0f)/180.0f);
+                    }
+                }, Qt::QueuedConnection);
+            }
+
+            else {
+                qDebug() << "Received unrecognized data:" << line;
+            }
     }
 }
 

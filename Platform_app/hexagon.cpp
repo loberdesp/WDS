@@ -118,7 +118,7 @@ void HexagonBars::drawBars(QPainter &painter) {
     }
 
     // Draw connecting inner hexagon
-    painter.setPen(QPen(Qt::yellow, 2));
+    painter.setPen(QPen(Qt::magenta, 2));
     painter.setBrush(Qt::NoBrush);
     painter.drawPolygon(QPolygonF(barTips));
 
