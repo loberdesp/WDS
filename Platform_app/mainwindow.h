@@ -11,6 +11,7 @@
 #include "imudisplay.h"
 #include "hexagon.h"
 #include "ImuGForce.h"
+#include "ImuErrorPlotWidget.h"
 
 /**
  * @class MainWindow
@@ -85,6 +86,14 @@ private:
     IMUDisplay *imuDisplay;         ///< Widget for displaying real-time IMU sensor readings.
     ImuGForceWidget *gForceWidget;  ///< Widget for visualizing the gravity forces acting on the platform.
     HexagonBars *hexagonBars;      ///< Visual component displaying hexagonal bars to represent the data.
+
+    ImuErrorPlotWidget *errorPlotWidget;
+    struct ImuData {
+        float ax, ay, az;
+        float gx, gy, gz;
+        bool valid = false;
+    };
+    ImuData imu1, imu2;
 
 signals:
     /**

@@ -74,6 +74,10 @@ MainWindow::MainWindow(QWidget *parent)
     frameLayout->addWidget(platformViewer);
 
     leftLayout->addWidget(modelFrame);
+
+    errorPlotWidget = new ImuErrorPlotWidget();
+    leftLayout->addWidget(errorPlotWidget);
+
     leftLayout->addStretch();
 
     // === RIGHT SIDE: HexagonBars + IMU Display ===
@@ -104,6 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
     rightLayout->addWidget(gForceWidget);
     rightLayout->addWidget(imuDisplay);
     rightLayout->addStretch();
+
 
     // Combine into main layout
     mainLayout->addLayout(leftLayout);
@@ -179,14 +184,43 @@ void MainWindow::readSerialData() {
                     imuDisplay->updateValues(fax, fay, faz, fgx, fgy, fgz);
                     platformViewer->updatePlatformOrientation(fax, fay, faz);
 
+                    imu1.ax = fax*0.000565;
+                    imu1.ay = fay*0.000565;
+                    imu1.az = faz*0.000565;
+                    imu1.gx = fgx;
+                    imu1.gy = fgy;
+                    imu1.gz = fgz;
+                    if(!imu1.valid) imu1.valid=1;
+
                     float gX = static_cast<float>(fax) / 16390.0f;
                     float gY = static_cast<float>(fay) / 16390.0f;
 
                     gForceWidget->setAcceleration(gX, gY);
                 } else if (imuId == 2) {
                     // imuDisplay2->updateValues(...)
+                    imu2.ax = fax*0.000565;
+                    imu2.ay = fay*0.000565;
+                    imu2.az = faz*0.000565;
+                    imu2.gx = fgx;
+                    imu2.gy = fgy;
+                    imu2.gz = fgz;
+                    if(!imu2.valid) imu2.valid=1;
+
                 } else {
                     qWarning() << "Unknown IMU ID:" << imuId;
+                }
+
+                // Jeśli dane obu IMU są gotowe:
+                if (imu1.valid && imu2.valid) {
+
+                    const float dax = imu1.ax - imu2.ax;
+                    const float day = imu1.ay - imu2.ay;
+                    const float daz = imu1.az - imu2.az;
+                    const float dgx = imu1.gx - imu2.gx;
+                    const float dgy = imu1.gy - imu2.gy;
+                    const int dgz = imu1.gz - imu2.gz;
+
+                    errorPlotWidget->addErrorSample(dax, day, daz, dgx, dgy, dgz);
                 }
             }, Qt::QueuedConnection);
         } else if (line.startsWith("S:") && line.contains('*')) {

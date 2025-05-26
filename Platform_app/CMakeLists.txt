@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialPort 3DCore 3DRender 3DExtras 3DInput)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialPort 3DCore 3DRender 3DExtras 3DInput Charts)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -31,6 +31,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         hexagon.cpp
         hexagon.h
         ImuGForce.h
+        ImuErrorPlotWidget.h
+        ImuErrorPlotWidget.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Platform_app APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -57,6 +59,7 @@ target_link_libraries(Platform_app PRIVATE
   Qt${QT_VERSION_MAJOR}::3DRender
   Qt${QT_VERSION_MAJOR}::3DExtras
   Qt${QT_VERSION_MAJOR}::3DInput
+  Qt${QT_VERSION_MAJOR}::Charts
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

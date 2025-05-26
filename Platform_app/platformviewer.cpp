@@ -109,8 +109,8 @@ PlatformViewer::PlatformViewer(QWidget *parent)
     m_container(QWidget::createWindowContainer(m_view, this))
 {
     // Set fixed widget size
-    m_container->setMinimumSize(500, 400);
-    m_container->setMaximumSize(500, 400);
+    m_container->setMinimumSize(300, 250);
+    m_container->setMaximumSize(300, 250);
 
     // Main layout
     QVBoxLayout *layout = new QVBoxLayout(this);
