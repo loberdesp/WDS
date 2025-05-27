@@ -101,12 +101,14 @@ MainWindow::MainWindow(QWidget *parent)
     gForceWidget = new ImuGForceWidget();
     gForceWidget->setAcceleration(0, 0);
 
-    imuDisplay = new IMUDisplay();
+    imu1Display = new IMUDisplay(0);
+    imu2Display = new IMUDisplay(1);
 
 
     rightLayout->addWidget(hexagonBars, 0, Qt::AlignHCenter);
     rightLayout->addWidget(gForceWidget);
-    rightLayout->addWidget(imuDisplay);
+    rightLayout->addWidget(imu1Display);
+    rightLayout->addWidget(imu2Display);
     rightLayout->addStretch();
 
 
@@ -181,7 +183,7 @@ void MainWindow::readSerialData() {
 
             QMetaObject::invokeMethod(this, [=]() {
                 if (imuId == 1) {
-                    imuDisplay->updateValues(fax, fay, faz, fgx, fgy, fgz);
+                    imu1Display->updateValues(fax, fay, faz, fgx, fgy, fgz);
                     platformViewer->updatePlatformOrientation(fax, fay, faz);
 
                     imu1.ax = fax*0.000565;
@@ -197,6 +199,7 @@ void MainWindow::readSerialData() {
 
                     gForceWidget->setAcceleration(gX, gY);
                 } else if (imuId == 2) {
+                    imu2Display->updateValues(fax, fay, faz, fgx, fgy, fgz);
                     // imuDisplay2->updateValues(...)
                     imu2.ax = fax*0.000565;
                     imu2.ay = fay*0.000565;

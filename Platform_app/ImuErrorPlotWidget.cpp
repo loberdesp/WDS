@@ -39,8 +39,9 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
 
     accelChartView = new QChartView(accelChart);
     accelChartView->setRenderHint(QPainter::Antialiasing);
-    accelChartView->setMinimumHeight(400);
-    accelChartView->setMinimumWidth(400);
+    accelChartView->setMinimumHeight(300);
+    accelChartView->setMinimumWidth(300);
+    accelChart->setMargins(QMargins(5, 5, 5, 5));
 
     // === Gyroscope Chart ===
     gyroChart = new QChart();
@@ -67,8 +68,9 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
 
     gyroChartView = new QChartView(gyroChart);
     gyroChartView->setRenderHint(QPainter::Antialiasing);
-    gyroChartView->setMinimumHeight(400);
-    gyroChartView->setMinimumWidth(400);
+    gyroChartView->setMinimumHeight(300);
+    gyroChartView->setMinimumWidth(300);
+    gyroChart->setMargins(QMargins(5, 5, 5, 5));
 
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->addWidget(accelChartView);
@@ -91,7 +93,7 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
     gyroZ->append(timeSec, dgz);
 
     // Define max window width in seconds
-    constexpr qreal windowWidth = 3.0;
+    constexpr qreal windowWidth = 4.0;
 
     // Calculate start and end for X axis range
     qreal start = 0.0;

@@ -3,13 +3,15 @@
 #include <QFont>
 #include <QFrame>
 
-IMUDisplay::IMUDisplay(QWidget *parent) : QWidget(parent) {
+IMUDisplay::IMUDisplay(bool id, QWidget *parent) : QWidget(parent) {
     QGridLayout *layout = new QGridLayout(this);
     layout->setSpacing(5);
     layout->setContentsMargins(10, 10, 10, 10);
 
     // Create header
-    QLabel *header = new QLabel("IMU Data");
+    const QString Title = "IMU Data ";
+    const QString id_str = id ? "2" : "1";
+    QLabel *header = new QLabel(Title+id_str);
     QFont headerFont = header->font();
     headerFont.setBold(true);
     headerFont.setPointSize(12);

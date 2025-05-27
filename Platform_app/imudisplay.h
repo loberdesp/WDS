@@ -21,7 +21,7 @@ public:
      * @brief Constructs an IMUDisplay object.
      * @param parent The parent widget, or nullptr if none.
      */
-    explicit IMUDisplay(QWidget *parent = nullptr);
+    explicit IMUDisplay(bool id, QWidget *parent = nullptr);
 
     /**
      * @brief Updates the displayed values for the accelerometer and gyroscope.

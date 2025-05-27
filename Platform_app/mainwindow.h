@@ -83,7 +83,8 @@ private:
     QLabel *statusLabel;           ///< Label displaying the current connection status.
 
     PlatformViewer *platformViewer; ///< 3D platform viewer for visualizing the platform's orientation.
-    IMUDisplay *imuDisplay;         ///< Widget for displaying real-time IMU sensor readings.
+    IMUDisplay *imu1Display;         ///< Widget for displaying real-time IMU sensor readings.
+    IMUDisplay *imu2Display;         ///< Widget for displaying real-time IMU sensor readings.
     ImuGForceWidget *gForceWidget;  ///< Widget for visualizing the gravity forces acting on the platform.
     HexagonBars *hexagonBars;      ///< Visual component displaying hexagonal bars to represent the data.
 
