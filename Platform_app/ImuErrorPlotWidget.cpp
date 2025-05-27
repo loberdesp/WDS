@@ -1,19 +1,30 @@
 #include "ImuErrorPlotWidget.h"
 #include <QVBoxLayout>
 
+/**
+ * @brief Constructs the ImuErrorPlotWidget and initializes the chart components.
+ *
+ * Sets up two charts for visualizing the difference in accelerometer and gyroscope values between two IMU devices.
+ * Initializes line series, axes, and chart views. Lays them out horizontally.
+ *
+ * @param parent The parent widget, or nullptr if none.
+ */
 ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     : QWidget(parent), sampleIndex(0)
 {
     timer.start();
+
+    // Initialize line series for acceleration errors
     accelX = new QLineSeries(); accelX->setName("ΔAccel X");
     accelY = new QLineSeries(); accelY->setName("ΔAccel Y");
     accelZ = new QLineSeries(); accelZ->setName("ΔAccel Z");
 
+    // Initialize line series for gyroscope errors
     gyroX = new QLineSeries(); gyroX->setName("ΔGyro X");
     gyroY = new QLineSeries(); gyroY->setName("ΔGyro Y");
     gyroZ = new QLineSeries(); gyroZ->setName("ΔGyro Z");
 
-    // === Accelerometer Chart ===
+    // === Accelerometer Chart Setup ===
     accelChart = new QChart();
     accelChart->addSeries(accelX);
     accelChart->addSeries(accelY);
@@ -21,7 +32,7 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     accelChart->createDefaultAxes();
     accelChart->setTitle("Accelerometer Error");
 
-    // Retrieve and configure axes after createDefaultAxes()
+    // Configure X axis
     if (auto xAxis = qobject_cast<QValueAxis*>(accelChart->axisX())) {
         accelAxisX = xAxis;
         accelAxisX->setLabelFormat("%d");
@@ -29,21 +40,23 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
         accelAxisX->setTickCount(0);
         accelAxisX->setRange(0, 1);
     }
+
+    // Configure Y axis
     if (auto yAxis = qobject_cast<QValueAxis*>(accelChart->axisY())) {
         accelAxisY = yAxis;
         accelAxisY->setLabelFormat("%.2f");
-        accelAxisX->setLabelsVisible(false);
         accelAxisY->setTickCount(0);
         accelAxisY->setRange(-1.0, 1.0);
     }
 
+    // Chart view for accelerometer chart
     accelChartView = new QChartView(accelChart);
     accelChartView->setRenderHint(QPainter::Antialiasing);
     accelChartView->setMinimumHeight(300);
     accelChartView->setMinimumWidth(300);
     accelChart->setMargins(QMargins(5, 5, 5, 5));
 
-    // === Gyroscope Chart ===
+    // === Gyroscope Chart Setup ===
     gyroChart = new QChart();
     gyroChart->addSeries(gyroX);
     gyroChart->addSeries(gyroY);
@@ -51,7 +64,7 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     gyroChart->createDefaultAxes();
     gyroChart->setTitle("Gyroscope Error");
 
-    // Retrieve and configure axes after createDefaultAxes()
+    // Configure X axis
     if (auto xAxis = qobject_cast<QValueAxis*>(gyroChart->axisX())) {
         gyroAxisX = xAxis;
         gyroAxisX->setLabelFormat("%d");
@@ -59,6 +72,8 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
         gyroAxisX->setTickCount(0);
         gyroAxisX->setRange(0, 1);
     }
+
+    // Configure Y axis
     if (auto yAxis = qobject_cast<QValueAxis*>(gyroChart->axisY())) {
         gyroAxisY = yAxis;
         gyroAxisY->setLabelFormat("%.2f");
@@ -66,24 +81,38 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
         gyroAxisY->setRange(-1.0, 1.0);
     }
 
+    // Chart view for gyroscope chart
     gyroChartView = new QChartView(gyroChart);
     gyroChartView->setRenderHint(QPainter::Antialiasing);
     gyroChartView->setMinimumHeight(300);
     gyroChartView->setMinimumWidth(300);
     gyroChart->setMargins(QMargins(5, 5, 5, 5));
 
+    // Layout setup
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->addWidget(accelChartView);
     layout->addWidget(gyroChartView);
     setLayout(layout);
-
-
 }
 
+/**
+ * @brief Adds a new sample of IMU error data to the charts.
+ *
+ * Updates the line series with new error values and prunes old values to maintain a moving time window.
+ * Dynamically rescales the Y axes based on the range of current visible data.
+ *
+ * @param dax Delta acceleration on X axis.
+ * @param day Delta acceleration on Y axis.
+ * @param daz Delta acceleration on Z axis.
+ * @param dgx Delta gyroscope on X axis.
+ * @param dgy Delta gyroscope on Y axis.
+ * @param dgz Delta gyroscope on Z axis.
+ */
 void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float dgx, float dgy, float dgz)
 {
     qreal timeSec = timer.elapsed() / 1000.0;
 
+    // Append new data points to each series
     accelX->append(timeSec, dax);
     accelY->append(timeSec, day);
     accelZ->append(timeSec, daz);
@@ -92,19 +121,13 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
     gyroY->append(timeSec, dgy);
     gyroZ->append(timeSec, dgz);
 
-    // Define max window width in seconds
+    // Define visible window width in seconds
     constexpr qreal windowWidth = 4.0;
 
-    // Calculate start and end for X axis range
-    qreal start = 0.0;
+    qreal start = qMax(0.0, timeSec - windowWidth);
     qreal end = timeSec;
 
-    if (timeSec > windowWidth) {
-        start = timeSec - windowWidth;
-        end = timeSec;
-    }
-
-    // Remove points older than start
+    // Lambda to remove old points from series
     auto pruneOldPoints = [start](QLineSeries* series) {
         while (!series->pointsVector().isEmpty() && series->pointsVector().first().x() < start) {
             series->remove(0);
@@ -115,10 +138,11 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
         pruneOldPoints(s);
     }
 
+    // Update X axis ranges
     accelAxisX->setRange(start, end);
     gyroAxisX->setRange(start, end);
 
-
+    // Lambda to update Y axis range based on current data
     auto updateYAxis = [](QValueAxis* axis, const std::vector<QLineSeries*>& seriesList) {
         qreal minY = std::numeric_limits<qreal>::max();
         qreal maxY = std::numeric_limits<qreal>::lowest();
@@ -128,6 +152,8 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
                 maxY = std::max(maxY, point.y());
             }
         }
+
+        // Prevent flat line from collapsing Y range
         if (minY == maxY) {
             minY -= 1;
             maxY += 1;
@@ -136,9 +162,11 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
             minY -= margin;
             maxY += margin;
         }
+
         axis->setRange(minY, maxY);
     };
 
+    // Update Y axes based on the current visible data
     updateYAxis(accelAxisY, {accelX, accelY, accelZ});
     updateYAxis(gyroAxisY, {gyroX, gyroY, gyroZ});
 }

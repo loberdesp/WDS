@@ -84,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *rightLayout = new QVBoxLayout();
 
     hexagonBars = new HexagonBars();
-    hexagonBars->setFixedSize(200, 200);
+    hexagonBars->setFixedSize(150, 150);
 
     // QTimer* timer = new QTimer(this);
     // int timeStep = 0;
@@ -183,30 +183,29 @@ void MainWindow::readSerialData() {
 
             QMetaObject::invokeMethod(this, [=]() {
                 if (imuId == 1) {
-                    imu1Display->updateValues(fax, fay, faz, fgx, fgy, fgz);
-                    platformViewer->updatePlatformOrientation(fax, fay, faz);
 
+                    platformViewer->updatePlatformOrientation(fax, fay, faz);
                     imu1.ax = fax*0.000565;
                     imu1.ay = fay*0.000565;
                     imu1.az = faz*0.000565;
-                    imu1.gx = fgx;
-                    imu1.gy = fgy;
-                    imu1.gz = fgz;
+                    imu1.gx = fgx/65.5f*M_PI/180.0f;
+                    imu1.gy = fgy/65.5f*M_PI/180.0f;
+                    imu1.gz = fgz/65.5f*M_PI/180.0f;
                     if(!imu1.valid) imu1.valid=1;
+                    imu1Display->updateValues(imu1.ax, imu1.ay, imu1.az, imu1.gx, imu1.gy, imu1.gz);
 
                     float gX = static_cast<float>(fax) / 16390.0f;
                     float gY = static_cast<float>(fay) / 16390.0f;
 
                     gForceWidget->setAcceleration(gX, gY);
                 } else if (imuId == 2) {
-                    imu2Display->updateValues(fax, fay, faz, fgx, fgy, fgz);
-                    // imuDisplay2->updateValues(...)
                     imu2.ax = fax*0.000565;
                     imu2.ay = fay*0.000565;
                     imu2.az = faz*0.000565;
-                    imu2.gx = fgx;
-                    imu2.gy = fgy;
-                    imu2.gz = fgz;
+                    imu2.gx = fgx/65.5f*M_PI/180.0f;
+                    imu2.gy = fgy/65.5f*M_PI/180.0f;
+                    imu2.gz = fgz/65.5f*M_PI/180.0f;
+                    imu2Display->updateValues(imu2.ax, imu2.ay, imu2.az, imu2.gx, imu2.gy, imu2.gz);
                     if(!imu2.valid) imu2.valid=1;
 
                 } else {

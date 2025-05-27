@@ -52,7 +52,7 @@ IMUDisplay::IMUDisplay(bool id, QWidget *parent) : QWidget(parent) {
         "   border: 1px solid #555555;"
         "   border-radius: 4px;"
         "   padding: 4px;"
-        "   min-width: 80px;"
+        "   min-width: 50px;"
         "   font-family: 'Courier New', monospace;"
         "   color: black;"  // Ensure value labels are black
         "}"
@@ -62,7 +62,7 @@ IMUDisplay::IMUDisplay(bool id, QWidget *parent) : QWidget(parent) {
 QLabel *IMUDisplay::createValueLabel() {
     QLabel *label = new QLabel("0.00");
     label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    label->setMinimumWidth(80);  // Fixed width to prevent shifting
+    label->setMinimumWidth(50);  // Fixed width to prevent shifting
     label->setFrameStyle(QFrame::Box | QFrame::Plain);
     label->setStyleSheet("QLabel { background-color: grey; padding: 3px; border: 1px solid black }");
     return label;
@@ -96,17 +96,13 @@ void IMUDisplay::setupAxisDisplay(QGridLayout *layout, const QString &name, int 
 void IMUDisplay::updateValues(float ax, float ay, float az, float gx, float gy, float gz) {
     // qDebug() << "Updating values:" << ax << ay << az << gx << gy << gz;  // Add this line
 
-    ax*=0.000565;
-    ay*=0.000565;
-    az*=0.000565;
-
     m_accelX.valueLabel->setText(QString::number(ax, 'f', 2));
     m_accelY.valueLabel->setText(QString::number(ay, 'f', 2));
     m_accelZ.valueLabel->setText(QString::number(az, 'f', 2));
 
-    m_gyroX.valueLabel->setText(QString::number(gx, 'f', 0));
-    m_gyroY.valueLabel->setText(QString::number(gy, 'f', 0));
-    m_gyroZ.valueLabel->setText(QString::number(gz, 'f', 0));
+    m_gyroX.valueLabel->setText(QString::number(gx, 'f', 2));
+    m_gyroY.valueLabel->setText(QString::number(gy, 'f', 2));
+    m_gyroZ.valueLabel->setText(QString::number(gz, 'f', 2));
 
     // Force immediate update
     this->update();
