@@ -21,7 +21,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 
-                void PlatformViewer::updateBallPhysics() {
+void PlatformViewer::updateBallPhysics() {
     const float deltaTime = 0.016f;   // ~60Hz
     float gravityMag = m_gravityInput->text().toFloat();
     const float friction = 0.98f;     // Simple friction
@@ -108,14 +108,18 @@ PlatformViewer::PlatformViewer(QWidget *parent)
     m_view(new Qt3DExtras::Qt3DWindow()),
     m_container(QWidget::createWindowContainer(m_view, this))
 {
+
     // Set fixed widget size
     m_container->setMinimumSize(300, 250);
-    m_container->setMaximumSize(300, 250);
+    m_container->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    m_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // Main layout
     QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(8, 8, 8, 8);  // Adds 8px padding on all sides
+    layout->setSpacing(0);
     layout->addWidget(m_container);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addSpacing(8);  // <-- Adds 8px padding below the 3D view
 
     QHBoxLayout *controls = new QHBoxLayout();
     layout->addLayout(controls);
@@ -125,11 +129,14 @@ PlatformViewer::PlatformViewer(QWidget *parent)
     m_gravityInput = new QLineEdit("9.8");
     m_gravityInput->setFixedWidth(50);
     controls->addWidget(gravityLabel);
+    controls->addSpacing(15);  // <-- Add 10px space here
     controls->addWidget(m_gravityInput);
+
+    controls->addStretch();
 
     // Reset button
     QPushButton *resetButton = new QPushButton("Reset Ball");
-    resetButton->setStyleSheet("background-color: black; color: white; border: none;");
+    resetButton->setFixedWidth(150);
     controls->addWidget(resetButton);
     connect(resetButton, &QPushButton::clicked, this, &PlatformViewer::resetBall);
 
@@ -197,7 +204,7 @@ PlatformViewer::PlatformViewer(QWidget *parent)
 
     // Camera configuration
     m_view->camera()->lens()->setPerspectiveProjection(45.0f, 16.0f/9.0f, 0.1f, 1000.0f);
-    m_view->camera()->setPosition(QVector3D(10, 5, 10));  // Diagonal view
+    m_view->camera()->setPosition(QVector3D(5, 3, 5));  // Diagonal view
     m_view->camera()->setViewCenter(QVector3D(0, 0, 0));  // Focus on origin
 
     // Camera controls

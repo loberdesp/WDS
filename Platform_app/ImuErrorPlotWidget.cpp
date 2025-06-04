@@ -45,8 +45,8 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     if (auto yAxis = qobject_cast<QValueAxis*>(accelChart->axisY())) {
         accelAxisY = yAxis;
         accelAxisY->setLabelFormat("%.2f");
-        accelAxisY->setTickCount(0);
-        accelAxisY->setRange(-1.0, 1.0);
+        accelAxisY->setTickCount(7);
+        accelAxisY->setRange(-6.0, 6.0);
     }
 
     // Chart view for accelerometer chart
@@ -78,7 +78,7 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
         gyroAxisY = yAxis;
         gyroAxisY->setLabelFormat("%.2f");
         gyroAxisY->setTickCount(7);
-        gyroAxisY->setRange(-1.0, 1.0);
+        gyroAxisY->setRange(-5.0, 5.0);
     }
 
     // Chart view for gyroscope chart
@@ -87,6 +87,8 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     gyroChartView->setMinimumHeight(300);
     gyroChartView->setMinimumWidth(300);
     gyroChart->setMargins(QMargins(5, 5, 5, 5));
+
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // Layout setup
     QHBoxLayout *layout = new QHBoxLayout(this);
@@ -167,6 +169,6 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
     };
 
     // Update Y axes based on the current visible data
-    updateYAxis(accelAxisY, {accelX, accelY, accelZ});
-    updateYAxis(gyroAxisY, {gyroX, gyroY, gyroZ});
+    // updateYAxis(accelAxisY, {accelX, accelY, accelZ});
+    // updateYAxis(gyroAxisY, {gyroX, gyroY, gyroZ});
 }

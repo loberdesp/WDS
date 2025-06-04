@@ -9,6 +9,7 @@ ImuGForceWidget::ImuGForceWidget(QWidget *parent)
     : QWidget(parent), accX(0.0f), accY(0.0f), maxG(3.0f), lastUpdateTime(0.0) {
     if (!globalTimer.isValid())
         globalTimer.start();
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 qreal ImuGForceWidget::getElapsedSeconds() {
@@ -33,11 +34,11 @@ void ImuGForceWidget::setAcceleration(float ax, float ay) {
 }
 
 QSize ImuGForceWidget::minimumSizeHint() const {
-    return QSize(100, 100);
+    return QSize(175, 175);
 }
 
 QSize ImuGForceWidget::sizeHint() const {
-    return QSize(200, 200);
+    return QSize(300, 300);
 }
 
 void ImuGForceWidget::paintEvent(QPaintEvent *) {

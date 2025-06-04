@@ -65,6 +65,9 @@ private:
      */
     void drawBars(QPainter &painter);
 
+    QSize minimumSizeHint() const override;
+    QSize sizeHint() const override;
+
     /**
      * @brief Draws height indicators for each bar (e.g., platform height effects).
      * @param painter The painter used for rendering.

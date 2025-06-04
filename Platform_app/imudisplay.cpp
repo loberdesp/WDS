@@ -63,6 +63,7 @@ QLabel *IMUDisplay::createValueLabel() {
     QLabel *label = new QLabel("0.00");
     label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     label->setMinimumWidth(50);  // Fixed width to prevent shifting
+
     label->setFrameStyle(QFrame::Box | QFrame::Plain);
     label->setStyleSheet("QLabel { background-color: grey; padding: 3px; border: 1px solid black }");
     return label;
@@ -85,6 +86,11 @@ void IMUDisplay::setupAxisDisplay(QGridLayout *layout, const QString &name, int 
     display->nameLabel = new QLabel(name);
     display->valueLabel = createValueLabel();
     display->valueLabel->setText("0.00");  // Initialize with default value
+
+    display->nameLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    display->nameLabel->setAlignment(Qt::AlignCenter);
+
+
 
     layout->addWidget(display->nameLabel, row, 0);
     layout->addWidget(display->valueLabel, row, 1);

@@ -62,21 +62,22 @@ MainWindow::MainWindow(QWidget *parent)
     controlLayout->addWidget(statusLabel);
     controlLayout->addStretch();
 
-    leftLayout->addWidget(controlPanel);
+    leftLayout->addWidget(controlPanel, 0);
 
     // 2. Platform viewer inside a frame
     QFrame *modelFrame = new QFrame();
     modelFrame->setFrameStyle(QFrame::Box | QFrame::Raised);
     modelFrame->setLineWidth(2);
-    modelFrame->setFixedSize(520, 420);
+    modelFrame->setMinimumSize(300, 240);  // Przykładowe minimum
+    modelFrame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     QVBoxLayout *frameLayout = new QVBoxLayout(modelFrame);
     frameLayout->addWidget(platformViewer);
 
-    leftLayout->addWidget(modelFrame);
+    leftLayout->addWidget(modelFrame, 2);
 
     errorPlotWidget = new ImuErrorPlotWidget();
-    leftLayout->addWidget(errorPlotWidget);
+    leftLayout->addWidget(errorPlotWidget, 2);
 
     leftLayout->addStretch();
 
@@ -84,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *rightLayout = new QVBoxLayout();
 
     hexagonBars = new HexagonBars();
-    hexagonBars->setFixedSize(150, 150);
+    hexagonBars->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // QTimer* timer = new QTimer(this);
     // int timeStep = 0;
@@ -101,20 +102,49 @@ MainWindow::MainWindow(QWidget *parent)
     gForceWidget = new ImuGForceWidget();
     gForceWidget->setAcceleration(0, 0);
 
+    // Create one QFrame to hold both IMU displays
+    QFrame* imuFrame = new QFrame;
+    imuFrame->setFrameShape(QFrame::Box);
+    imuFrame->setLineWidth(1);
+    imuFrame->setMidLineWidth(0);
+    imuFrame->setContentsMargins(2, 2, 2, 2);  // Outer margins around the frame
+    // Apply a darker border using a style sheet
+    imuFrame->setStyleSheet(
+        "QFrame { "
+        "  border: 1px solid #444444; "   // Dark gray border
+        "  border-radius: 4px; "          // Optional: rounded corners
+        "}"
+        );
+
+    // Create a layout inside the frame
+    QVBoxLayout* imuLayout = new QVBoxLayout(imuFrame);
+    imuLayout->setContentsMargins(4, 4, 4, 4); // Inner padding inside the frame
+    imuLayout->setSpacing(4);                 // Space between imu1 and imu2
+
+    // Create the IMU displays
     imu1Display = new IMUDisplay(0);
     imu2Display = new IMUDisplay(1);
 
 
-    rightLayout->addWidget(hexagonBars, 0, Qt::AlignHCenter);
-    rightLayout->addWidget(gForceWidget);
-    rightLayout->addWidget(imu1Display);
-    rightLayout->addWidget(imu2Display);
+    // Add displays to layout inside the frame
+    imuLayout->addWidget(imu1Display);
+    imuLayout->addWidget(imu2Display);
+
+    // Add the framed widget to your main layout
+    QHBoxLayout* sensorLayout = new QHBoxLayout();
+    sensorLayout->addWidget(hexagonBars);
+    sensorLayout->addWidget(gForceWidget);
+
+    rightLayout->addWidget(imuFrame);  // ← Now both are inside one frame
+
+    rightLayout->addLayout(sensorLayout);
+
     rightLayout->addStretch();
 
 
     // Combine into main layout
-    mainLayout->addLayout(leftLayout);
-    mainLayout->addLayout(rightLayout);
+    mainLayout->addLayout(leftLayout, 3);
+    mainLayout->addLayout(rightLayout, 2);
 
     setCentralWidget(centralWidget);
     resize(800, 700);

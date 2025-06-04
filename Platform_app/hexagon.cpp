@@ -5,6 +5,7 @@
 HexagonBars::HexagonBars(QWidget *parent)
     : QWidget(parent), barValues(6, 0.5f) {
     calculateHexagon();
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 void HexagonBars::setBarValue(int index, float value) {
@@ -19,8 +20,11 @@ float HexagonBars::getBarValue(int index) const {
 
 void HexagonBars::calculateHexagon() {
     hexagonPoints.clear();
-    float radius = 70; // You can scale this based on widget size
-    float angleDeg = 0;
+
+    float size = qMin(width(), height());
+    float radius = size * 0.4f;  // 80% diameter => 40% radius
+    float angleDeg = -90;        // Start pointing upward
+
     for (int i = 0; i < 6; ++i) {
         float angleRad = qDegreesToRadians(angleDeg);
         float x = width() / 2 + radius * qCos(angleRad);
@@ -28,6 +32,14 @@ void HexagonBars::calculateHexagon() {
         hexagonPoints.append(QPointF(x, y));
         angleDeg += 60;
     }
+}
+
+QSize HexagonBars::minimumSizeHint() const {
+    return QSize(200, 200);
+}
+
+QSize HexagonBars::sizeHint() const {
+    return QSize(300, 300);
 }
 
 void HexagonBars::paintEvent(QPaintEvent *) {
@@ -68,8 +80,12 @@ void HexagonBars::drawHeightIndicators(QPainter &painter, const QVector<float>& 
     }
 }
 
+// QSize HexagonBars::sizeHint() const {
+//     return QSize(200, 200);
+// }
+
 void HexagonBars::drawBars(QPainter &painter) {
-    float barLength = 50;  // Length from outer hex point toward center
+    float barLength = qMin(width(), height()) * 0.3f;  // 20% of the smallest dimension
     float barWidth = 10;
     QVector<QPointF> barTips;
 
