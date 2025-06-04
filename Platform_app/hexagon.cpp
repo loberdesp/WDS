@@ -2,159 +2,153 @@
 #include <QPainter>
 #include <QtMath>
 
+// Konstruktor widgetu szesciokata z paskami
 HexagonBars::HexagonBars(QWidget *parent)
-    : QWidget(parent), barValues(6, 0.5f) {
-    calculateHexagon();
+    : QWidget(parent), barValues(6, 0.5f) {  // Inicjalizacja 6 pasków z wartoscia 0.5
+    calculateHexagon();  // Wylicz wspolrzedne szesciokata
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
+// Ustawienie wartosci paska w danym indeksie (0-5)
 void HexagonBars::setBarValue(int index, float value) {
-    if (index < 0 || index >= 6) return;
-    barValues[index] = qBound(0.0f, value, 1.0f);
-    update();
+    if (index < 0 || index >= 6) return;  // Sprawdzenie zakresu
+    barValues[index] = qBound(0.0f, value, 1.0f);  // Ograniczenie wartosci do [0,1]
+    update();  // Przerysuj widget
 }
 
+// Pobranie wartosci paska
 float HexagonBars::getBarValue(int index) const {
     return (index >= 0 && index < 6) ? barValues[index] : 0.0f;
 }
 
+// Oblicz wspolrzedne 6 wierzcholkow szesciokata
 void HexagonBars::calculateHexagon() {
     hexagonPoints.clear();
 
     float size = qMin(width(), height());
-    float radius = size * 0.4f;  // 80% diameter => 40% radius
-    float angleDeg = -90;        // Start pointing upward
+    float radius = size * 0.4f;  // Promien to 40% rozmiaru
+    float angleDeg = -90;        // Startowy kat skierowany do gory
 
     for (int i = 0; i < 6; ++i) {
         float angleRad = qDegreesToRadians(angleDeg);
         float x = width() / 2 + radius * qCos(angleRad);
         float y = height() / 2 + radius * qSin(angleRad);
-        hexagonPoints.append(QPointF(x, y));
-        angleDeg += 60;
+        hexagonPoints.append(QPointF(x, y));  // Dodaj wierzcholek
+        angleDeg += 60;  // Kolejny kat (co 60 stopni)
     }
 }
 
+// Minimalny rozmiar widgetu
 QSize HexagonBars::minimumSizeHint() const {
     return QSize(200, 200);
 }
 
+// Preferowany rozmiar widgetu
 QSize HexagonBars::sizeHint() const {
     return QSize(300, 300);
 }
 
+// Glowna funkcja rysujaca widget
 void HexagonBars::paintEvent(QPaintEvent *) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    calculateHexagon();
-    drawBars(painter);
-    drawHexagon(painter);
-
+    calculateHexagon();      // Odswiez wspolrzedne szesciokata
+    drawBars(painter);       // Rysuj paski
+    drawHexagon(painter);    // Rysuj kontur szesciokata
 }
 
+// Rysuj kontur szesciokata
 void HexagonBars::drawHexagon(QPainter &painter) {
     QPolygonF polygon(hexagonPoints);
 
-    QPen pen(Qt::white);        // Set color
-    pen.setWidth(3);            // Thickness in pixels (increase as needed)
-    pen.setJoinStyle(Qt::MiterJoin); // Optional: cleaner corners
+    QPen pen(Qt::white);          // Kolor bialy
+    pen.setWidth(3);              // Grubosc linii
+    pen.setJoinStyle(Qt::MiterJoin);  // Styl laczenia krawedzi
 
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
     painter.drawPolygon(polygon);
 }
 
+// Rysuj wskazniki wysokosci (np. cienie lub efekty podniesienia)
 void HexagonBars::drawHeightIndicators(QPainter &painter, const QVector<float>& heights) {
     for (int i = 0; i < 6; ++i) {
         QPointF outerPoint = hexagonPoints[i];
-
-        // Simulate the raised section effect (e.g., draw a shadow or glow)
         float height = heights[i];
+
         if (height > 0) {
             painter.setPen(Qt::NoPen);
-            painter.setBrush(QColor(0, 0, 0, 40));  // Semi-transparent shadow effect
+            painter.setBrush(QColor(0, 0, 0, 40));  // Pólprzezroczysty cien
             QRectF shadowRect(outerPoint.x() - 5, outerPoint.y() - 5, 10, height);
-            painter.drawEllipse(shadowRect);  // Shadow for raised section
-
-            // Optionally, draw a glow or a raised visual effect here
+            painter.drawEllipse(shadowRect);  // Cien elipsy jako efekt podniesienia
         }
     }
 }
 
-// QSize HexagonBars::sizeHint() const {
-//     return QSize(200, 200);
-// }
-
+// Rysuj paski wychodzace ze szesciokata
 void HexagonBars::drawBars(QPainter &painter) {
-    float barLength = qMin(width(), height()) * 0.3f;  // 20% of the smallest dimension
-    float barWidth = 10;
-    QVector<QPointF> barTips;
+    float barLength = qMin(width(), height()) * 0.3f;  // Dlugosc paskow = 30% rozmiaru
+    float barWidth = 10;  // Szerokosc paska
+    QVector<QPointF> barTips;  // Koncowe punkty paskow
 
-    // Simulate "height" changes for expanded bars
-    QVector<float> barHeights;  // To store height values for each bar
-    QPointF center = QPointF(width() / 2, height() / 2);
+    QVector<float> barHeights;  // Wysokosci do efektu podniesienia
+    QPointF center = QPointF(width() / 2, height() / 2);  // Srodek widgetu
 
     for (int i = 0; i < 6; ++i) {
         float value = barValues[i];
         QPointF outerPoint = hexagonPoints[i];
 
-        // Direction vector from outer point to center
+        // Kierunek od punktu zewnetrznego do srodka
         QPointF direction = center - outerPoint;
-        direction = direction / std::hypot(direction.x(), direction.y());  // Normalize
+        direction = direction / std::hypot(direction.x(), direction.y());  // Normalizacja
 
-        // Compute tip based on value
+        // Oblicz koniec paska na podstawie wartosci
         QPointF tip = outerPoint + direction * (barLength * value);
         barTips.append(tip);
 
-        // Simulate a "height effect" by adjusting the z-axis or platform height
-        float height = value * 10;  // For example, height increases as value increases
+        float height = value * 10;  // "Wysokosc" efektu 3D
         barHeights.append(height);
 
-        // Draw bar rectangle along direction vector
+        // Rysowanie paska
         painter.save();
+        painter.translate(outerPoint);  // Przesun punkt odniesienia
 
-        // Translate to outer point
-        painter.translate(outerPoint);
-
-        // Compute rotation angle
         float angleRad = std::atan2(direction.y(), direction.x());
         float angleDeg = qRadiansToDegrees(angleRad);
-        painter.rotate(angleDeg);
+        painter.rotate(angleDeg);  // Obrót do kierunku paska
 
-        // Set the color based on the value (Green -> Yellow -> Red gradient)
-        QColor barColor = getBarColor(value);
+        QColor barColor = getBarColor(value);  // Kolor w zaleznosci od wartosci
         painter.setBrush(barColor);
 
-        QPen borderPen(Qt::white);
+        QPen borderPen(Qt::white);  // Obramowanie biale
         borderPen.setWidth(2);
         painter.setPen(borderPen);
-        QRectF barRect(0, -barWidth / 2, barLength * value, barWidth);
-        painter.drawRect(barRect);
 
-        painter.restore();
+        QRectF barRect(0, -barWidth / 2, barLength * value, barWidth);
+        painter.drawRect(barRect);  // Rysuj prostokat paska
+
+        painter.restore();  // Przywroc poprzedni stan painter'a
     }
 
-    // Draw connecting inner hexagon
+    // Rysuj szesciokat laczacy konce paskow
     painter.setPen(QPen(Qt::magenta, 2));
     painter.setBrush(Qt::NoBrush);
     painter.drawPolygon(QPolygonF(barTips));
 
-    // Optionally, you could simulate raising the platform section by drawing
-    // additional effects like shadows or adjusting the height of the platform part
+    // Rysuj efekty wysokosci (np. cienie)
     drawHeightIndicators(painter, barHeights);
 }
 
-// Function to return the color based on the bar value
+// Funkcja zwraca kolor paska w zaleznosci od wartosci
 QColor HexagonBars::getBarColor(float value) {
-    // Map the value from 0.0 to 1.0 to a gradient from green to yellow to red
+    // Gradient: zielony -> zolty -> czerwony
     if (value <= 0.5f) {
-        // Green to Yellow (value 0 to 0.5)
-        int green = 255;  // Full green
-        int red = static_cast<int>(510 * value); // Red starts increasing from 0 to 255
-        return QColor(red, green, 0);  // Return the color as RGB
+        int green = 255;
+        int red = static_cast<int>(510 * value);  // Czerwien rosnie do 255
+        return QColor(red, green, 0);
     } else {
-        // Yellow to Red (value 0.5 to 1.0)
-        int red = 255; // Red increases from 0 to 255
-        int green = static_cast<int>(255 - 510 * (value - 0.5f)); // Green decreases from 255 to 0
-        return QColor(red, green, 0);  // Return the color as RGB
+        int red = 255;
+        int green = static_cast<int>(255 - 510 * (value - 0.5f));  // Zielony maleje do 0
+        return QColor(red, green, 0);
     }
 }
