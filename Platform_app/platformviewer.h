@@ -1,3 +1,18 @@
+/**
+ * @file    platformviewer.h
+ * @brief   3D Stewart platform visualization with IMU integration and physics simulation
+ *
+ * @details Provides real-time 3D visualization of:
+ *          - Stewart platform orientation from IMU data
+ *          - Virtual ball physics simulation
+ *          - Configurable gravity effects
+ *          - Interactive reset functionality
+ *
+ * @author  Piotr Siembab
+ * @date    18.04.2025
+ * @version 1.4
+ */
+
 #ifndef PLATFORMVIEWER_H
 #define PLATFORMVIEWER_H
 
@@ -10,10 +25,19 @@
 
 /**
  * @class PlatformViewer
- * @brief A QWidget-based 3D visualizer for a Stewart platform with an IMU and virtual ball simulation.
+ * @brief 3D visualization widget for Stewart platform with physics simulation
  *
- * This widget provides a 3D visualization of a Stewart platform's orientation based on IMU data.
- * It also includes a simulation of a virtual ball affected by platform orientation and gravity.
+ * @details Combines:
+ *          - Qt3D-based rendering
+ *          - IMU orientation visualization
+ *          - Real-time physics simulation
+ *          - User-configurable parameters
+ *
+ * The widget displays:
+ * - Stewart platform model responding to IMU data
+ * - Virtual ball affected by platform tilt and gravity
+ * - Gravity control interface
+ * - Automatic physics updates
  */
 class PlatformViewer : public QWidget
 {
@@ -21,53 +45,98 @@ class PlatformViewer : public QWidget
 
 public:
     /**
-     * @brief Constructs a new PlatformViewer object.
-     * @param parent The parent widget, or nullptr if none.
+     * @brief Constructs the 3D visualization widget
+     * @param parent Parent widget (default: nullptr)
+     *
+     * @details Initializes:
+     *          - 3D rendering environment
+     *          - Platform and ball models
+     *          - Physics simulation timer
+     *          - Gravity control interface
      */
     explicit PlatformViewer(QWidget *parent = nullptr);
 
     /**
-     * @brief Returns a recommended size for the widget.
-     * @return Suggested QSize of 500x400.
+     * @brief Provides recommended widget size
+     * @return QSize(500, 400) for optimal 3D viewing
      */
     QSize sizeHint() const override { return QSize(500, 400); }
 
     /**
-     * @brief Updates the platform's orientation based on IMU data.
-     * @param ax Rotation around the X-axis (pitch).
-     * @param ay Rotation around the Y-axis (roll).
-     * @param az Rotation around the Z-axis (yaw).
+     * @brief Updates platform orientation from IMU data
+     * @param ax X-axis rotation (pitch) in raw IMU units
+     * @param ay Y-axis rotation (roll) in raw IMU units
+     * @param az Z-axis rotation (yaw) in raw IMU units
      *
-     * This function updates the 3D transform of the platform model.
+     * @details Converts raw IMU values to 3D transform:
+     *          - Applies platform rotation
+     *          - Maintains physical constraints
+     *          - Triggers visual update
      */
     void updatePlatformOrientation(int ax, int ay, int az);
 
 private:
-    Qt3DExtras::Qt3DWindow *m_view;                 ///< 3D rendering window for the scene.
-    QWidget *m_container;                           ///< Container widget for integrating Qt3DWindow into QWidget layout.
-    Qt3DCore::QTransform *m_platformTransform;      ///< Transformation applied to the Stewart platform model.
+    Qt3DExtras::Qt3DWindow *m_view;           ///< Main 3D rendering window
+    QWidget *m_container;                     ///< Container for embedding Qt3D in QWidget
+    Qt3DCore::QTransform *m_platformTransform;///< Platform's 3D transformation
 
-    Qt3DCore::QEntity *m_ballEntity;                ///< Entity representing the virtual ball in the 3D scene.
-    QVector3D m_ballVelocity;                       ///< Current velocity vector of the virtual ball.
-    Qt3DCore::QTransform *m_ballTransform;          ///< Transformation applied to the virtual ball.
+    Qt3DCore::QEntity *m_ballEntity;          ///< Virtual ball entity
+    QVector3D m_ballVelocity;                 ///< Current ball velocity (m/s)
+    Qt3DCore::QTransform *m_ballTransform;    ///< Ball's 3D transformation
 
-    QLineEdit *m_gravityInput;                      ///< UI element for user input to change gravity settings.
-    QTimer *m_updateTimer;                          ///< Timer to update ball physics at regular intervals.
+    QLineEdit *m_gravityInput;                ///< Gravity magnitude input field
+    QTimer *m_updateTimer;                    ///< Physics update timer (60Hz)
+
+    /**
+     * @brief Initializes the 3D scene components
+     *
+     * @details Creates:
+     *          - Platform model with realistic dimensions
+     *          - Virtual ball with physics properties
+     *          - Lighting and camera setup
+     */
+    void initialize3DScene();
+
+    /**
+     * @brief Creates the platform control interface
+     *
+     * @details Builds:
+     *          - Gravity input field
+     *          - Reset button
+     *          - Status indicators
+     */
+    void createControlPanel();
 
 private slots:
     /**
-     * @brief Updates the physics of the virtual ball.
+     * @brief Updates ball physics simulation
      *
-     * Called periodically by the update timer to simulate ball movement based on orientation and gravity.
+     * @details Calculates each frame:
+     *          - Gravity effects based on platform tilt
+     *          - Collision detection with platform
+     *          - Velocity and position updates
+     *          - Energy loss on impact
      */
     void updateBallPhysics();
 
     /**
-     * @brief Resets the virtual ball to its initial position and velocity.
+     * @brief Resets the ball to initial position
      *
-     * Useful for testing and reinitializing the simulation.
+     * @details:
+     *          - Places ball at platform center
+     *          - Zeroes velocity
+     *          - Clears any accumulated error
      */
     void resetBall();
+
+    /**
+     * @brief Applies new gravity value from user input
+     * @param value String containing new gravity value
+     *
+     * @details Validates and converts input to m/s²,
+     *          with default fallback to 9.81 m/s²
+     */
+    void setGravity(const QString &value);
 };
 
 #endif // PLATFORMVIEWER_H

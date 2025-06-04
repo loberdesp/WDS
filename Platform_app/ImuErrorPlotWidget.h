@@ -1,3 +1,18 @@
+/**
+ * @file    imuerrorplotwidget.h
+ * @brief   Real-time IMU error visualization widget using Qt Charts
+ *
+ * @details Provides dual chart visualization for comparing IMU sensor differences:
+ *          - Accelerometer error (X, Y, Z axes)
+ *          - Gyroscope error (X, Y, Z axes)
+ *          - Configurable sample history
+ *          - Automatic axis scaling
+ *
+ * @author  Piotr Siembab
+ * @date    18.04.2025
+ * @version 1.2
+ */
+
 #ifndef IMUERRORPLOTWIDGET_H
 #define IMUERRORPLOTWIDGET_H
 
@@ -10,11 +25,20 @@
 
 /**
  * @class ImuErrorPlotWidget
- * @brief Widget for visualizing IMU error data over time.
+ * @brief Dual-chart widget for visualizing IMU sensor differences
  *
- * This widget displays real-time differences in acceleration and gyroscope readings
- * between two IMU devices using line charts. It maintains a history of error samples
- * and plots them for comparison and diagnostics.
+ * @details Features include:
+ *          - Separate charts for accelerometer and gyroscope errors
+ *          - 200-sample rolling history
+ *          - Color-coded axes (X=red, Y=green, Z=blue)
+ *          - Dynamic Y-axis scaling
+ *          - Millisecond-accurate timing
+ *
+ * Typical use cases:
+ * - IMU calibration verification
+ * - Sensor fusion algorithm debugging
+ * - Vibration analysis
+ * - Hardware synchronization monitoring
  */
 class ImuErrorPlotWidget : public QWidget
 {
@@ -22,53 +46,106 @@ class ImuErrorPlotWidget : public QWidget
 
 public:
     /**
-     * @brief Constructor for ImuErrorPlotWidget.
-     * @param parent Optional parent widget.
+     * @brief Constructs the error plot widget
+     * @param parent Parent widget (default: nullptr)
      *
-     * Initializes the plotting components for both accelerometer and gyroscope error data.
+     * @details Initializes:
+     *          - Dual chart layout (accelerometer/gyroscope)
+     *          - Color-coded data series
+     *          - Axis configurations
+     *          - Sample history buffers
      */
     explicit ImuErrorPlotWidget(QWidget *parent = nullptr);
 
     /**
-     * @brief Adds a new sample of IMU error data to the plot.
-     * @param dax Difference in acceleration along the X axis.
-     * @param day Difference in acceleration along the Y axis.
-     * @param daz Difference in acceleration along the Z axis.
-     * @param dgx Difference in angular velocity (gyroscope) along the X axis.
-     * @param dgy Difference in angular velocity (gyroscope) along the Y axis.
-     * @param dgz Difference in angular velocity (gyroscope) along the Z axis.
+     * @brief Adds new error sample to both charts
+     * @param dax X-axis acceleration difference (m/s²)
+     * @param day Y-axis acceleration difference (m/s²)
+     * @param daz Z-axis acceleration difference (m/s²)
+     * @param dgx X-axis gyro difference (rad/s)
+     * @param dgy Y-axis gyro difference (rad/s)
+     * @param dgz Z-axis gyro difference (rad/s)
      *
-     * This method appends a new set of error measurements to the series and updates the chart display.
-     * When the maximum number of samples is reached, the oldest samples are discarded.
+     * @details Handles:
+     *          - Sample buffer rotation
+     *          - Automatic axis scaling
+     *          - Chart updates
+     *          - Time tracking
+     *
+     * @note Sample values should be in consistent SI units
+     * @see maxSamples
      */
     void addErrorSample(float dax, float day, float daz, float dgx, float dgy, float dgz);
 
 private:
-    int sampleIndex;                  ///< Current index used for plotting new samples.
-    const int maxSamples = 200;       ///< Maximum number of samples to display on the plot.
+    int sampleIndex;                  ///< Circular buffer index (0-maxSamples)
+    const int maxSamples = 200;       ///< Maximum stored samples per axis
 
     // Accelerometer error series
-    QLineSeries *accelX;              ///< Line series for X-axis acceleration error.
-    QLineSeries *accelY;              ///< Line series for Y-axis acceleration error.
-    QLineSeries *accelZ;              ///< Line series for Z-axis acceleration error.
+    QLineSeries *accelX;              ///< X-axis acceleration error (typically red)
+    QLineSeries *accelY;              ///< Y-axis acceleration error (typically green)
+    QLineSeries *accelZ;              ///< Z-axis acceleration error (typically blue)
 
     // Gyroscope error series
-    QLineSeries *gyroX;               ///< Line series for X-axis gyroscope error.
-    QLineSeries *gyroY;               ///< Line series for Y-axis gyroscope error.
-    QLineSeries *gyroZ;               ///< Line series for Z-axis gyroscope error.
+    QLineSeries *gyroX;               ///< X-axis angular velocity error
+    QLineSeries *gyroY;               ///< Y-axis angular velocity error
+    QLineSeries *gyroZ;               ///< Z-axis angular velocity error
 
-    QChartView *accelChartView;       ///< View for displaying the accelerometer error chart.
-    QChartView *gyroChartView;        ///< View for displaying the gyroscope error chart.
+    // Chart display components
+    QChartView *accelChartView;       ///< Container for accelerometer chart
+    QChartView *gyroChartView;        ///< Container for gyroscope chart
 
-    QChart *accelChart;               ///< Chart object for accelerometer errors.
-    QChart *gyroChart;                ///< Chart object for gyroscope errors.
+    // Chart objects
+    QChart *accelChart;               ///< Accelerometer error visualization
+    QChart *gyroChart;                ///< Gyroscope error visualization
 
-    QValueAxis *accelAxisX;           ///< X-axis for accelerometer error chart (typically sample/time index).
-    QValueAxis *accelAxisY;           ///< Y-axis for accelerometer error chart (value scale).
-    QValueAxis *gyroAxisX;            ///< X-axis for gyroscope error chart.
-    QValueAxis *gyroAxisY;            ///< Y-axis for gyroscope error chart.
+    // Chart axes
+    QValueAxis *accelAxisX;           ///< Accelerometer time/index axis
+    QValueAxis *accelAxisY;           ///< Accelerometer value axis (auto-scaled)
+    QValueAxis *gyroAxisX;            ///< Gyroscope time/index axis
+    QValueAxis *gyroAxisY;            ///< Gyroscope value axis (auto-scaled)
 
-    QElapsedTimer timer;              ///< Timer to optionally track time since the widget was initialized (not currently used).
+    QElapsedTimer timer;              ///< High-resolution timer for sample timing
+
+    /**
+     * @brief Initializes a chart with default settings
+     * @param chart Pointer to chart object
+     * @param title Chart display title
+     * @param axisX Pointer to X-axis
+     * @param axisY Pointer to Y-axis
+     *
+     * @details Configures:
+     *          - Chart title and legend
+     *          - Axis labels and ranges
+     *          - Animation options
+     *          - Background styling
+     */
+    void setupChart(QChart* chart, const QString& title, QValueAxis* axisX, QValueAxis* axisY);
+
+    /**
+     * @brief Initializes a data series with default settings
+     * @param series Pointer to line series
+     * @param name Series display name
+     * @param color Series line color
+     *
+     * @details Configures:
+     *          - Line style and width
+     *          - Color and opacity
+     *          - Point visualization
+     */
+    void setupSeries(QLineSeries* series, const QString& name, const QColor& color);
+
+    /**
+     * @brief Updates chart axis ranges based on current data
+     * @param axisY Y-axis to update
+     * @param series List of series to consider
+     *
+     * @details Automatically scales Y-axis to:
+     *          - Show all visible data points
+     *          - Maintain reasonable margins
+     *          - Keep zero centered when appropriate
+     */
+    void updateYAxisRange(QValueAxis* axisY, const QList<QLineSeries*>& series);
 };
 
 #endif // IMUERRORPLOTWIDGET_H

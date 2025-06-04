@@ -1,3 +1,18 @@
+/**
+ * @file    imudisplay.h
+ * @brief   IMU sensor data visualization widget
+ *
+ * @details Provides a compact display for real-time IMU sensor readings including:
+ *          - 3-axis accelerometer data (X, Y, Z)
+ *          - 3-axis gyroscope data (X, Y, Z)
+ *          - Formatted numerical values with proper units
+ *          - Clear visual separation between sensor types
+ *
+ * @author  Piotr Siembab
+ * @date    18.04.2025
+ * @version 1.0
+ */
+
 #ifndef IMUDISPLAY_H
 #define IMUDISPLAY_H
 
@@ -7,63 +22,95 @@
 
 /**
  * @class IMUDisplay
- * @brief Displays real-time IMU sensor readings such as accelerometer and gyroscope data.
+ * @brief Widget for visualizing IMU sensor data in real-time
  *
- * This widget is designed to display the sensor values of an IMU, specifically the accelerometer and gyroscope
- * data for the X, Y, and Z axes. It provides an organized layout with labels for each axis and updates in real-time
- * as new data becomes available.
+ * @details Displays formatted numerical values for:
+ *          - Linear acceleration (typically in m/s² or g)
+ *          - Angular velocity (typically in rad/s or °/s)
+ *
+ * The display organizes data in a clean grid layout with:
+ * - Separate sections for accelerometer and gyroscope
+ * - Clear axis labeling
+ * - Consistent numerical formatting
  */
 class IMUDisplay : public QWidget {
     Q_OBJECT
 
 public:
     /**
-     * @brief Constructs an IMUDisplay object.
-     * @param parent The parent widget, or nullptr if none.
+     * @brief Constructs an IMU display widget
+     * @param id IMU identifier (used for display differentiation)
+     * @param parent Parent widget (default: nullptr)
+     *
+     * @details Initializes all UI elements including:
+     *          - Axis labels for both sensor types
+     *          - Value display areas
+     *          - Layout organization
      */
     explicit IMUDisplay(bool id, QWidget *parent = nullptr);
 
     /**
-     * @brief Updates the displayed values for the accelerometer and gyroscope.
-     * @param ax Accelerometer reading along the X-axis.
-     * @param ay Accelerometer reading along the Y-axis.
-     * @param az Accelerometer reading along the Z-axis.
-     * @param gx Gyroscope reading along the X-axis.
-     * @param gy Gyroscope reading along the Y-axis.
-     * @param gz Gyroscope reading along the Z-axis.
+     * @brief Updates all displayed sensor values
+     * @param ax X-axis acceleration value
+     * @param ay Y-axis acceleration value
+     * @param az Z-axis acceleration value
+     * @param gx X-axis angular velocity
+     * @param gy Y-axis angular velocity
+     * @param gz Z-axis angular velocity
      *
-     * This function is called to update the widget's labels with the new sensor values. The data is updated
-     * in real-time as the IMU sends new readings.
+     * @details Accepts new sensor readings and:
+     *          - Formats values to 2 decimal places
+     *          - Updates all display labels
+     *          - Maintains consistent units display
+     *
+     * @note All values should be in consistent units (typically SI units)
      */
     void updateValues(float ax, float ay, float az, float gx, float gy, float gz);
 
 private:
     /**
-     * @brief Creates a QLabel to display a value.
-     * @return A QLabel widget.
+     * @brief Creates a standardized value display label
+     * @return Configured QLabel pointer
      *
-     * This helper function is used to create QLabel objects that are used for displaying individual sensor values.
+     * @details Creates labels with consistent:
+     *          - Font styling
+     *          - Alignment
+     *          - Minimum width
+     *          - Numeric formatting
      */
     QLabel *createValueLabel();
 
     /**
-     * @brief Sets up the display of each axis's values in the provided layout.
-     * @param layout The QGridLayout to which the axis labels will be added.
-     * @param name The name of the axis to display (e.g., "X", "Y", "Z").
-     * @param row The row number in the layout for the axis labels.
+     * @brief Configures display elements for one sensor axis
+     * @param layout Target grid layout for placement
+     * @param name Axis name identifier ("X", "Y", or "Z")
+     * @param row Grid layout row position
      *
-     * This function organizes the layout by adding a label for the axis name and its corresponding value.
+     * @details Creates and positions:
+     *          - Axis name label
+     *          - Value display label
+     *          - Proper spacing elements
      */
     void setupAxisDisplay(QGridLayout *layout, const QString &name, int row);
 
+    /**
+     * @struct AxisDisplay
+     * @brief Container for axis display elements
+     */
     struct AxisDisplay {
-        QLabel *nameLabel; ///< Label for the axis name (e.g., "Accel X").
-        QLabel *valueLabel; ///< Label for the axis value (e.g., "0.00").
+        QLabel *nameLabel;  ///< Label showing axis identifier (e.g., "Accel X")
+        QLabel *valueLabel; ///< Label showing current value (e.g., "1.23 m/s²")
     };
 
-    // Axis displays for accelerometer and gyroscope values.
-    AxisDisplay m_accelX, m_accelY, m_accelZ; ///< Accelerometer axis labels.
-    AxisDisplay m_gyroX, m_gyroY, m_gyroZ;    ///< Gyroscope axis labels.
+    // Accelerometer displays
+    AxisDisplay m_accelX; ///< X-axis acceleration display
+    AxisDisplay m_accelY; ///< Y-axis acceleration display
+    AxisDisplay m_accelZ; ///< Z-axis acceleration display
+
+    // Gyroscope displays
+    AxisDisplay m_gyroX;  ///< X-axis angular velocity display
+    AxisDisplay m_gyroY;  ///< Y-axis angular velocity display
+    AxisDisplay m_gyroZ;  ///< Z-axis angular velocity display
 };
 
 #endif // IMUDISPLAY_H

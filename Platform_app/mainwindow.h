@@ -1,3 +1,16 @@
+/**
+ * @file    mainwindow.h
+ * @brief   Main application window declaration for IMU visualization system
+ *
+ * @details Defines the MainWindow class which serves as the central GUI component
+ *          for interacting with IMU sensors, displaying their data, and visualizing
+ *          platform orientation and servo positions.
+ *
+ * @author  Piotr Siembab
+ * @date    18.04.2025
+ * @version 1.1
+ */
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -16,11 +29,17 @@
 
 /**
  * @class MainWindow
- * @brief Main application window for IMU visualization and platform control.
+ * @brief Central widget managing IMU data visualization and serial communication
  *
- * This class provides the user interface and logic to manage serial communication
- * with IMU devices, display their orientation and sensor readings, and visualize
- * calculated errors and gravity forces in a Qt-based GUI.
+ * @details The MainWindow class provides:
+ *          - Serial port management for IMU communication
+ *          - Real-time 3D visualization of platform orientation
+ *          - Dual IMU data comparison and error plotting
+ *          - Servo position visualization
+ *          - G-force vector display
+ *
+ * The UI is organized with control elements on the left and visualization
+ * widgets on the right, following a logical data flow from input to display.
  */
 class MainWindow : public QMainWindow
 {
@@ -28,89 +47,128 @@ class MainWindow : public QMainWindow
 
 public:
     /**
-     * @brief Constructs the main window and initializes UI components and serial port handling.
-     * @param parent Pointer to the parent QWidget, if any.
+     * @brief Constructs the main application window
+     * @param parent Optional parent widget (default: nullptr)
+     *
+     * @details Initializes all UI components and sets up:
+     *          - Serial port interface
+     *          - 3D visualization widget
+     *          - IMU data displays
+     *          - Control panel elements
+     *          - Signal-slot connections
      */
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
 
     /**
-     * @brief Destructor. Closes serial connection if open and cleans up resources.
+     * @brief Destructor ensuring proper resource cleanup
+     *
+     * @details Automatically:
+     *          - Closes serial port connection if open
+     *          - Releases all dynamically allocated resources
+     *          - Maintains Qt object hierarchy
      */
-    ~MainWindow();
+    ~MainWindow() override;
 
 private slots:
     /**
-     * @brief Refreshes the list of available COM ports in the dropdown.
+     * @brief Refreshes available serial ports list
      *
-     * Triggered when the refresh button is clicked. Scans and updates available serial ports.
+     * @details Scans system for available COM ports and updates the port selection
+     *          combo box. Triggered both at startup and by user request.
      */
     void refreshPorts();
 
     /**
-     * @brief Connects or disconnects from the selected serial port.
+     * @brief Toggles serial port connection state
      *
-     * Triggered when the connect button is clicked. Opens or closes the serial port connection
-     * and updates the connection status in the UI.
+     * @details Manages the full connection lifecycle:
+     *          - Opens port at 115200 baud when connecting
+     *          - Properly closes port when disconnecting
+     *          - Updates UI elements to reflect connection state
+     *          - Handles connection errors gracefully
      */
     void toggleConnection();
 
     /**
-     * @brief Handles incoming serial data.
+     * @brief Processes incoming serial data
      *
-     * Continuously reads, verifies, and parses incoming IMU or servo data from the serial port.
-     * Also dispatches updates to the UI components accordingly.
+     * @details Continuously reads and parses data from the serial port,
+     *          supporting two message formats:
+     *          1. IMU data packets (format: "IMU:<id>,<ax>,<ay>,<az>,<gx>,<gy>,<gz>*<crc>")
+     *          2. Servo data packets (format: "S:<a1>,<a2>,<a3>,<a4>,<a5>,<a6>*<crc>")
+     *
+     * Validates CRC checksums and updates appropriate visualization widgets.
      */
     void readSerialData();
 
     /**
-     * @brief Calculates CRC-8 checksum over a list of 16-bit values encoded in QByteArray.
-     * @param data List of data fields to compute CRC over.
-     * @return CRC-8 checksum value.
+     * @brief Computes CRC-8 checksum for data validation
+     * @param data List of data fields to checksum
+     * @return Computed CRC-8 value
      *
-     * Used for data integrity verification on incoming serial messages.
+     * @details Uses polynomial 0x31 (x^8 + x^5 + x^4 + 1) and processes
+     *          both LSB and MSB of each 16-bit value. Essential for data
+     *          integrity verification in serial communication.
      */
     uint8_t calculateCrc8(const QList<QByteArray>& data);
 
 private:
     /**
-     * @brief Updates the label showing connection status.
-     * @param connected True if serial port is open and connected, false otherwise.
+     * @brief Updates connection status display
+     * @param connected Current connection state (true = connected)
+     *
+     * @details Modifies both text and styling of the status label:
+     *          - Green checkmark and port name when connected
+     *          - Red cross when disconnected
+     *          - Updates tooltips and accessibility features
      */
     void updateConnectionStatus(bool connected);
 
-    QSerialPort *serial;              ///< Serial communication handler.
-    QPushButton *refreshButton;       ///< Button to refresh the COM port list.
-    QPushButton *connectButton;       ///< Button to initiate or end connection.
-    QComboBox *portComboBox;          ///< Dropdown listing available COM ports.
-    QLabel *statusLabel;              ///< Label displaying current connection state.
+    // Serial communication members
+    QSerialPort *serial;              ///< Handles low-level serial communication
+    QPushButton *refreshButton;       ///< Triggers port list refresh (labeled "Ports ▼")
+    QPushButton *connectButton;       ///< Toggles connection state (labeled "Connect"/"Disconnect")
+    QComboBox *portComboBox;          ///< Dropdown list of available serial ports
+    QLabel *statusLabel;              ///< Visual indicator of connection status
 
-    PlatformViewer *platformViewer;   ///< Widget displaying 3D orientation of the IMU platform.
-    IMUDisplay *imu1Display;          ///< Widget for showing IMU 1 sensor data.
-    IMUDisplay *imu2Display;          ///< Widget for showing IMU 2 sensor data.
-    ImuGForceWidget *gForceWidget;    ///< Widget visualizing gravity force from IMU readings.
-    HexagonBars *hexagonBars;         ///< Widget showing servo angles as hexagonal bars.
-    ImuErrorPlotWidget *errorPlotWidget; ///< Widget for plotting differences between IMUs.
+    // Visualization widgets
+    PlatformViewer *platformViewer;   ///< 3D renderer for platform orientation visualization
+    IMUDisplay *imu1Display;          ///< Display widget for first IMU's sensor data
+    IMUDisplay *imu2Display;          ///< Display widget for second IMU's sensor data
+    ImuGForceWidget *gForceWidget;    ///< Gravity vector visualization component
+    HexagonBars *hexagonBars;         ///< Hexagonal servo position indicator
+    ImuErrorPlotWidget *errorPlotWidget; ///< Difference plot between two IMUs
 
     /**
      * @struct ImuData
-     * @brief Structure for storing parsed IMU values.
+     * @brief Container for processed IMU sensor values
      */
     struct ImuData {
-        float ax, ay, az; ///< Linear acceleration (m/s² or g, depending on scaling).
-        float gx, gy, gz; ///< Angular velocity (rad/s).
-        bool valid = false; ///< True if current data is valid and can be used.
+        float ax;        ///< X-axis acceleration (scaled to m/s²)
+        float ay;        ///< Y-axis acceleration (scaled to m/s²)
+        float az;        ///< Z-axis acceleration (scaled to m/s²)
+        float gx;        ///< X-axis angular velocity (rad/s)
+        float gy;        ///< Y-axis angular velocity (rad/s)
+        float gz;        ///< Z-axis angular velocity (rad/s)
+        bool valid;      ///< Data validity flag (true when current data is usable)
+
+        /**
+         * @brief Default constructor initializing all values to zero
+         */
+        ImuData() : ax(0), ay(0), az(0), gx(0), gy(0), gz(0), valid(false) {}
     };
 
-    ImuData imu1; ///< Data for IMU 1.
-    ImuData imu2; ///< Data for IMU 2.
+    ImuData imu1; ///< Data storage for first IMU unit
+    ImuData imu2; ///< Data storage for second IMU unit
 
 signals:
     /**
-     * @brief Emitted after processing data from serial input.
-     * @param intValue Integer field parsed from the data stream.
-     * @param floatValue Float field parsed from the data stream.
+     * @brief Signals completed data processing
+     * @param intValue Parsed integer value from data stream
+     * @param floatValue Parsed floating-point value from data stream
      *
-     * Can be connected to other widgets or processing units that depend on updated IMU data.
+     * @details Emitted after successful parsing and validation of incoming data.
+     *          Can be connected to additional processing modules or logging systems.
      */
     void dataProcessed(int intValue, float floatValue);
 };
