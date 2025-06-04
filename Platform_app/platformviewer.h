@@ -128,15 +128,6 @@ private slots:
      *          - Clears any accumulated error
      */
     void resetBall();
-
-    /**
-     * @brief Applies new gravity value from user input
-     * @param value String containing new gravity value
-     *
-     * @details Validates and converts input to m/s²,
-     *          with default fallback to 9.81 m/s²
-     */
-    void setGravity(const QString &value);
 };
 
 #endif // PLATFORMVIEWER_H
