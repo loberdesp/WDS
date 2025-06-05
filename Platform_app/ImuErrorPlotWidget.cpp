@@ -16,14 +16,14 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     timer.start();
 
     // Inicjalizacja serii danych dla bledu akcelerometru
-    accelX = new QLineSeries(); accelX->setName("ΔAccel X");
-    accelY = new QLineSeries(); accelY->setName("ΔAccel Y");
-    accelZ = new QLineSeries(); accelZ->setName("ΔAccel Z");
+    accelX = new QLineSeries(); accelX->setName(tr("ΔAccel X"));
+    accelY = new QLineSeries(); accelY->setName(tr("ΔAccel Y"));
+    accelZ = new QLineSeries(); accelZ->setName(tr("ΔAccel Z"));
 
     // Inicjalizacja serii danych dla bledu zyroskopu
-    gyroX = new QLineSeries(); gyroX->setName("ΔGyro X");
-    gyroY = new QLineSeries(); gyroY->setName("ΔGyro Y");
-    gyroZ = new QLineSeries(); gyroZ->setName("ΔGyro Z");
+    gyroX = new QLineSeries(); gyroX->setName(tr("ΔGyro X"));
+    gyroY = new QLineSeries(); gyroY->setName(tr("ΔGyro Y"));
+    gyroZ = new QLineSeries(); gyroZ->setName(tr("ΔGyro Z"));
 
     // === Konfiguracja wykresu akcelerometru ===
     accelChart = new QChart();
@@ -31,7 +31,7 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     accelChart->addSeries(accelY);
     accelChart->addSeries(accelZ);
     accelChart->createDefaultAxes();
-    accelChart->setTitle("Accelerometer Error");
+    accelChart->setTitle(tr("Accelerometer Error"));
 
     // Konfiguracja osi X
     if (auto xAxis = qobject_cast<QValueAxis*>(accelChart->axisX())) {
@@ -63,7 +63,7 @@ ImuErrorPlotWidget::ImuErrorPlotWidget(QWidget *parent)
     gyroChart->addSeries(gyroY);
     gyroChart->addSeries(gyroZ);
     gyroChart->createDefaultAxes();
-    gyroChart->setTitle("Gyroscope Error");
+    gyroChart->setTitle(tr("Gyroscope Error"));
 
     // Konfiguracja osi X
     if (auto xAxis = qobject_cast<QValueAxis*>(gyroChart->axisX())) {
@@ -144,4 +144,18 @@ void ImuErrorPlotWidget::addErrorSample(float dax, float day, float daz, float d
     // Aktualizacja zakresu osi X
     accelAxisX->setRange(start, end);
     gyroAxisX->setRange(start, end);
+}
+
+void ImuErrorPlotWidget::retranslateUi()
+{
+    accelX->setName(tr("ΔAccel X"));
+    accelY->setName(tr("ΔAccel Y"));
+    accelZ->setName(tr("ΔAccel Z"));
+
+    gyroX->setName(tr("ΔGyro X"));
+    gyroY->setName(tr("ΔGyro Y"));
+    gyroZ->setName(tr("ΔGyro Z"));
+
+    accelChart->setTitle(tr("Accelerometer Error"));
+    gyroChart->setTitle(tr("Gyroscope Error"));
 }

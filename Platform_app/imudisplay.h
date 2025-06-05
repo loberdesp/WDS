@@ -67,6 +67,15 @@ public:
      */
     void updateValues(float ax, float ay, float az, float gx, float gy, float gz);
 
+    /**
+     * @brief Updates all user-visible strings in the UI to reflect the current language.
+     *
+     * This function should be called whenever the application language changes,
+     * to re-apply translations to all text elements such as labels, titles, and tooltips.
+     * It ensures the interface dynamically updates without restarting the application.
+     */
+    void retranslateUi();
+
 private:
     /**
      * @brief Creates a standardized value display label
@@ -111,6 +120,28 @@ private:
     AxisDisplay m_gyroX;  ///< X-axis angular velocity display
     AxisDisplay m_gyroY;  ///< Y-axis angular velocity display
     AxisDisplay m_gyroZ;  ///< Z-axis angular velocity display
+
+    /**
+ * @brief Main header label displaying the IMU data title.
+ *
+ * Usually shows text like "IMU Data 1" or "IMU Data 2".
+ */
+    QLabel *header;
+
+    /**
+ * @brief Base title string for the IMU display header.
+ *
+ * Used as the prefix before the IMU device identifier.
+ */
+    QString Title;
+
+    /**
+ * @brief Identifier suffix string ("1" or "2") for the IMU display.
+ *
+ * Distinguishes between multiple IMU devices in the UI.
+ */
+    QString id_str;
+
 };
 
 #endif // IMUDISPLAY_H

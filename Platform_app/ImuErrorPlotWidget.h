@@ -77,6 +77,15 @@ public:
      */
     void addErrorSample(float dax, float day, float daz, float dgx, float dgy, float dgz);
 
+    /**
+     * @brief Updates all user-visible strings in the UI to reflect the current language.
+     *
+     * This function should be called whenever the application language changes,
+     * to re-apply translations to all text elements such as labels, titles, and tooltips.
+     * It ensures the interface dynamically updates without restarting the application.
+     */
+    void retranslateUi();
+
 private:
     int sampleIndex;                  ///< Circular buffer index (0-maxSamples)
     const int maxSamples = 200;       ///< Maximum stored samples per axis

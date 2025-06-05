@@ -46,9 +46,11 @@ void PlatformViewer::updateBallPhysics() {
     float ballY = (d - normal.x() * pos.x() - normal.z() * pos.z()) / normal.y();
 
     // Sprawdzenie czy pilka jest na platformie
+    const float edgeMargin = ballRadius * (2.0f / 3.0f);
+
     bool onPlatform =
-        pos.x() >= -2.5f + ballRadius && pos.x() <= 2.5f - ballRadius &&
-        pos.z() >= -1.5f + ballRadius && pos.z() <= 1.5f - ballRadius;
+        pos.x() >= -3.0f + edgeMargin && pos.x() <= 3.0f - edgeMargin &&
+        pos.z() >= -2.0f + edgeMargin && pos.z() <= 2.0f - edgeMargin;
 
     if (onPlatform && pos.y() - ballRadius <= ballY) {
         // Ustawienie pilki na platformie
@@ -99,7 +101,7 @@ PlatformViewer::PlatformViewer(QWidget *parent)
     layout->addLayout(controls);
 
     // Pole do wprowadzania grawitacji
-    QLabel *gravityLabel = new QLabel("Gravity:");
+    gravityLabel = new QLabel(tr("Gravity:"));
     m_gravityInput = new QLineEdit("9.8");
     m_gravityInput->setFixedWidth(50);
     controls->addWidget(gravityLabel);
@@ -109,7 +111,7 @@ PlatformViewer::PlatformViewer(QWidget *parent)
     controls->addStretch();
 
     // Przycisk resetujacy pilke
-    QPushButton *resetButton = new QPushButton("Reset Ball");
+    resetButton = new QPushButton(tr("Reset Ball"));
     resetButton->setFixedWidth(150);
     controls->addWidget(resetButton);
     connect(resetButton, &QPushButton::clicked, this, &PlatformViewer::resetBall);
@@ -202,4 +204,10 @@ void PlatformViewer::updatePlatformOrientation(int ax, int ay, int az) {
 
     // Ustawienie rotacji platformy
     m_platformTransform->setRotation(QQuaternion::fromEulerAngles(pitch, 0, roll));
+}
+
+
+void PlatformViewer::retranslateUi() {
+    gravityLabel->setText(tr("Gravity:"));
+    resetButton->setText(tr("Reset Ball"));
 }

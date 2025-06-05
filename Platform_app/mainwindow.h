@@ -20,6 +20,9 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QLabel>
+#include <QApplication>
+#include <QTranslator>
+#include <QDir>
 
 #include "platformviewer.h"
 #include "imudisplay.h"
@@ -79,6 +82,14 @@ private slots:
     void refreshPorts();
 
     /**
+     * @brief Switches the application language at runtime
+     *
+     * @details Loads appropriate .qm translation files and triggers UI retranslation.
+     *          Supports toggling between multiple languages dynamically.
+     */
+    void switchLanguage();
+
+    /**
      * @brief Toggles serial port connection state
      *
      * @details Manages the full connection lifecycle:
@@ -124,19 +135,20 @@ private:
      */
     void updateConnectionStatus(bool connected);
 
-    // Serial communication members
+    // === Serial communication ===
     QSerialPort *serial;              ///< Handles low-level serial communication
     QPushButton *refreshButton;       ///< Triggers port list refresh (labeled "Ports ▼")
+    QPushButton *languageButton;      ///< Toggles the application language
     QPushButton *connectButton;       ///< Toggles connection state (labeled "Connect"/"Disconnect")
     QComboBox *portComboBox;          ///< Dropdown list of available serial ports
     QLabel *statusLabel;              ///< Visual indicator of connection status
 
-    // Visualization widgets
-    PlatformViewer *platformViewer;   ///< 3D renderer for platform orientation visualization
-    IMUDisplay *imu1Display;          ///< Display widget for first IMU's sensor data
-    IMUDisplay *imu2Display;          ///< Display widget for second IMU's sensor data
-    ImuGForceWidget *gForceWidget;    ///< Gravity vector visualization component
-    HexagonBars *hexagonBars;         ///< Hexagonal servo position indicator
+    // === Visualization widgets ===
+    PlatformViewer *platformViewer;       ///< 3D renderer for platform orientation visualization
+    IMUDisplay *imu1Display;              ///< Display widget for first IMU's sensor data
+    IMUDisplay *imu2Display;              ///< Display widget for second IMU's sensor data
+    ImuGForceWidget *gForceWidget;        ///< Gravity vector visualization component
+    HexagonBars *hexagonBars;            ///< Hexagonal servo position indicator
     ImuErrorPlotWidget *errorPlotWidget; ///< Difference plot between two IMUs
 
     /**
@@ -160,6 +172,29 @@ private:
 
     ImuData imu1; ///< Data storage for first IMU unit
     ImuData imu2; ///< Data storage for second IMU unit
+
+    /**
+     * @brief Handles translation and loading of language files.
+     *
+     * Used to apply and switch UI language dynamically.
+     */
+    QTranslator translator;
+
+    /**
+     * @brief Stores the current language code (e.g., "en" for English).
+     *
+     * Keeps track of the selected language for the application.
+     */
+    QString currentLanguage = "en";
+
+    /**
+     * @brief Updates all user-visible strings in the UI to reflect the current language.
+     *
+     * This function should be called whenever the application language changes,
+     * to re-apply translations to all text elements such as labels, titles, and tooltips.
+     * It ensures the interface dynamically updates without restarting the application.
+     */
+    void retranslateUi();
 
 signals:
     /**

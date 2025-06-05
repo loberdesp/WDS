@@ -9,65 +9,92 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialPort 3DCore 3DRender 3DExtras 3DInput Charts)
-
-set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+# Znajdź Qt z wymaganymi komponentami
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Linguist LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
+    Widgets
+    SerialPort
+    3DCore
+    3DRender
+    3DExtras
+    3DInput
+    Charts
+    Linguist
+    LinguistTools
 )
 
+# Ustawienia tłumaczeń
+set(TRANSLATIONS_DIR ${CMAKE_SOURCE_DIR}/translations)
+file(MAKE_DIRECTORY ${TRANSLATIONS_DIR})
+
+set(TS_FILES
+    ${TRANSLATIONS_DIR}/app_pl.ts
+    ${TRANSLATIONS_DIR}/app_en.ts
+)
+
+
+
+
+
+# Źródła projektu
+set(SOURCES
+    platformviewer.cpp
+    imudisplay.cpp
+    ImuGForce.cpp
+    hexagon.cpp
+    ImuErrorPlotWidget.cpp
+    mainwindow.cpp
+    main.cpp
+)
+
+set(HEADERS
+    platformviewer.h
+    imudisplay.h
+    ImuGForce.h
+    hexagon.h
+    ImuErrorPlotWidget.h
+    mainwindow.h
+)
+
+# Tworzenie wykonywalnego pliku
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Platform_app
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        platformviewer.h
-        platformviewer.cpp
-        imudisplay.h
-        imudisplay.cpp
-        ImuGForce.cpp
-        hexagon.cpp
-        hexagon.h
-        ImuGForce.h
-        ImuErrorPlotWidget.h
-        ImuErrorPlotWidget.cpp
+        ${SOURCES}
+        ${HEADERS}
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET Platform_app APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(Platform_app SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+        add_library(Platform_app SHARED ${SOURCES})
     else()
-        add_executable(Platform_app
-            ${PROJECT_SOURCES}
-        )
+        add_executable(Platform_app ${SOURCES})
     endif()
 endif()
 
+# Linkowanie i zasoby
+if(QM_FILES)
+    qt_add_resources(translations_resources
+        PREFIX "/"
+        FILES ${QM_FILES}
+    )
+    target_link_libraries(Platform_app PRIVATE translations_resources)
+endif()
+
 target_link_libraries(Platform_app PRIVATE
-  Qt${QT_VERSION_MAJOR}::Widgets
-  Qt${QT_VERSION_MAJOR}::SerialPort
-  Qt${QT_VERSION_MAJOR}::3DCore
-  Qt${QT_VERSION_MAJOR}::3DRender
-  Qt${QT_VERSION_MAJOR}::3DExtras
-  Qt${QT_VERSION_MAJOR}::3DInput
-  Qt${QT_VERSION_MAJOR}::Charts
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::SerialPort
+    Qt${QT_VERSION_MAJOR}::3DCore
+    Qt${QT_VERSION_MAJOR}::3DRender
+    Qt${QT_VERSION_MAJOR}::3DExtras
+    Qt${QT_VERSION_MAJOR}::3DInput
+    Qt${QT_VERSION_MAJOR}::Charts
 )
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
+# Ustawienia dla macOS
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Platform_app)
+    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Platform_app)
 endif()
+
 set_target_properties(Platform_app PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -76,6 +103,7 @@ set_target_properties(Platform_app PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+# Instalacja
 include(GNUInstallDirs)
 install(TARGETS Platform_app
     BUNDLE DESTINATION .
@@ -83,6 +111,25 @@ install(TARGETS Platform_app
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+
+
+
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(Platform_app)
+endif()
+
+if(TARGET Qt${QT_VERSION_MAJOR}::lupdate)
+    qt_add_lupdate(${PROJECT_NAME}
+        TS_FILES ${TS_FILES}
+        SOURCES ${SOURCES} ${HEADERS}
+    )
+endif()
+
+
+if(TARGET Qt${QT_VERSION_MAJOR}::lrelease)
+    qt_add_lrelease(${PROJECT_NAME}
+        TS_FILES ${TS_FILES}
+        QM_FILES_OUTPUT_VARIABLE QM_FILES
+        OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/translations
+    )
 endif()

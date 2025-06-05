@@ -22,6 +22,8 @@
 #include <QPainter>
 #include <Qt3DCore/QTransform>
 #include <QLineEdit>
+#include <QLabel>
+#include <QPushButton>
 
 /**
  * @class PlatformViewer
@@ -75,6 +77,16 @@ public:
      */
     void updatePlatformOrientation(int ax, int ay, int az);
 
+
+    /**
+     * @brief Updates all user-visible strings in the UI to reflect the current language.
+     *
+     * This function should be called whenever the application language changes,
+     * to re-apply translations to all text elements such as labels, titles, and tooltips.
+     * It ensures the interface dynamically updates without restarting the application.
+     */
+    void retranslateUi();
+
 private:
     Qt3DExtras::Qt3DWindow *m_view;           ///< Main 3D rendering window
     QWidget *m_container;                     ///< Container for embedding Qt3D in QWidget
@@ -86,6 +98,16 @@ private:
 
     QLineEdit *m_gravityInput;                ///< Gravity magnitude input field
     QTimer *m_updateTimer;                    ///< Physics update timer (60Hz)
+
+    /**
+ * @brief Label displaying gravity or related measurement information.
+ */
+    QLabel *gravityLabel;
+
+    /**
+ * @brief Button to reset the current view or settings.
+ */
+    QPushButton *resetButton;
 
     /**
      * @brief Initializes the 3D scene components

@@ -9,6 +9,10 @@
 #include <QtGlobal>
 #include <QTimer>
 #include <cmath>
+#include <QPushButton>
+#include <QDir>
+#include <QApplication>
+
 
 // Konstruktor glownego okna
 MainWindow::MainWindow(QWidget *parent)
@@ -16,6 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
     serial(new QSerialPort(this)),                  // Inicjalizacja portu szeregowego
     platformViewer(new PlatformViewer())            // Widget do wizualizacji platformy 3D
 {
+
+    // Załaduj domyślny język
+    translator.load("app_pl.qm", QDir::currentPath() + "/translations");
+    qApp->installTranslator(&translator);
+
     // Glowny widget i layout
     QWidget *centralWidget = new QWidget(this);
     QHBoxLayout *mainLayout = new QHBoxLayout(centralWidget);
@@ -27,23 +36,29 @@ MainWindow::MainWindow(QWidget *parent)
     QWidget *controlPanel = new QWidget();
     QHBoxLayout *controlLayout = new QHBoxLayout(controlPanel);
 
+    languageButton = new QPushButton(tr("🇬🇧 EN"), this);
+    connect(languageButton, &QPushButton::clicked, this, &MainWindow::switchLanguage);
+    languageButton->setFixedWidth(50);
+
     // Przycisk odswiezania portow
-    refreshButton = new QPushButton("Ports ▼");
-    refreshButton->setFixedWidth(80);
+    refreshButton = new QPushButton();
+    refreshButton->setText(tr("Refresh Ports"));
+    refreshButton->setFixedWidth(120);
 
     // Lista portow COM
     portComboBox = new QComboBox();
     portComboBox->setMinimumWidth(150);
 
     // Przycisk polaczenia
-    connectButton = new QPushButton("Connect");
+    connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setFixedWidth(100);
 
     // Etykieta statusu
-    statusLabel = new QLabel("Status: Disconnected");
+    statusLabel = new QLabel(tr("Status: Disconnected"));
     statusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
 
     // Dodanie elementow do panelu
+    controlLayout->addWidget(languageButton);
     controlLayout->addWidget(refreshButton);
     controlLayout->addWidget(portComboBox);
     controlLayout->addWidget(connectButton);
@@ -113,6 +128,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(refreshButton, &QPushButton::clicked, this, &MainWindow::refreshPorts);
     connect(connectButton, &QPushButton::clicked, this, &MainWindow::toggleConnection);
     connect(serial, &QSerialPort::readyRead, this, &MainWindow::readSerialData, Qt::QueuedConnection);
+
+retranslateUi();
+
 }
 
 // Odczyt danych z portu szeregowego
@@ -309,13 +327,13 @@ void MainWindow::toggleConnection()
     if (serial->isOpen()) {
         serial->close();
         updateConnectionStatus(false);
-        connectButton->setText("Connect");
+        connectButton->setText(tr("Connect"));
         return;
     }
 
     QString portName = portComboBox->currentText();
     if (portName.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No port selected!");
+        QMessageBox::warning(this, tr("Error"), tr("No port selected!"));
         return;
     }
 
@@ -324,9 +342,9 @@ void MainWindow::toggleConnection()
 
     if (serial->open(QIODevice::ReadWrite)) {
         updateConnectionStatus(true);
-        connectButton->setText("Disconnect");
+        connectButton->setText(tr("Disconnect"));
     } else {
-        QMessageBox::critical(this, "Error", "Failed to open port: " + serial->errorString());
+        QMessageBox::critical(this, QObject::tr("Error"), tr("Failed to open port: ") + serial->errorString());
     }
 }
 
@@ -334,10 +352,10 @@ void MainWindow::toggleConnection()
 void MainWindow::updateConnectionStatus(bool connected)
 {
     if (connected) {
-        statusLabel->setText("\u2713 Connected to " + portComboBox->currentText());
+        statusLabel->setText(tr("\u2713 Connected to ") + portComboBox->currentText());
         statusLabel->setStyleSheet("QLabel { color: green; font-weight: bold; }");
     } else {
-        statusLabel->setText("\u2717 Disconnected");
+        statusLabel->setText(tr("\u2717 Disconnected"));
         statusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
     }
 }
@@ -348,4 +366,43 @@ MainWindow::~MainWindow()
     if (serial->isOpen()) {
         serial->close();
     }
+}
+
+void MainWindow::switchLanguage() {
+    qApp->removeTranslator(&translator);
+
+    QString qmFile;
+    QString qmPath = QCoreApplication::applicationDirPath() + "/../../translations";
+
+    if (currentLanguage == "pl") {
+        qmFile = "app_en.qm";
+        currentLanguage = "en";
+    } else {
+        qmFile = "app_pl.qm";
+        currentLanguage = "pl";
+    }
+
+    QString fullPath = qmPath + "/" + qmFile;
+
+
+    translator.load(qmFile, qmPath);
+    qApp->installTranslator(&translator);
+
+    retranslateUi();
+}
+
+void MainWindow::retranslateUi() {
+
+    languageButton->setText(tr("🇬🇧 EN"));
+    refreshButton->setText(tr("Refresh Ports"));
+
+    // Ten przycisk ma tekst zależny od stanu połączenia
+    connectButton->setText(serial->isOpen() ? tr("Disconnect") : tr("Connect"));
+
+    updateConnectionStatus(serial->isOpen());
+
+    platformViewer->retranslateUi();
+    imu1Display->retranslateUi();
+    imu2Display->retranslateUi();
+    errorPlotWidget->retranslateUi();
 }

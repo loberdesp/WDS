@@ -1,13 +1,9 @@
 /**
  * @file    hexagon.h
- * @brief   Hexagonal bar visualization widget for Qt applications
+ * @brief   Hexagonal bar platform visualization widget for Qt applications
  *
  * @details Provides a customizable hexagon widget that displays six proportional bars,
- *          typically used for visualizing:
- *          - Servo motor positions
- *          - Force/torque distribution
- *          - Hexapod leg status
- *          - Symmetrical multi-axis data
+ *          used for visualizing servo motor positions
  *
  * @author  Piotr Siembab
  * @date    18.04.2025
