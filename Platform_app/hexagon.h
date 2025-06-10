@@ -67,6 +67,8 @@ public:
      */
     float getBarValue(int index) const;
 
+    void updateServoAngles(const QVector<int>& angles);  // Nowa funkcja publiczna
+
 protected:
     /**
      * @brief Handles widget painting events
@@ -148,6 +150,8 @@ private:
      *          - 1.0: Red
      */
     QColor getBarColor(float value);
+
+    QVector<int> servoAngles = {0, 0, 0, 0, 0, 0};  // Przechowuj rzeczywiste kąty serw
 };
 
 #endif // HEXAGON_H

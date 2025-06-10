@@ -275,7 +275,8 @@ void MainWindow::readSerialData() {
             // Aktualizacja paskow serw
             QMetaObject::invokeMethod(this, [=]() {
                 for(int i=0;i<6;i++) {
-                    hexagonBars->setBarValue(i, (servoAngles[i]+90.0f)/180.0f);
+                    // hexagonBars->setBarValue(i, (servoAngles[i]+90.0f)/180.0f);
+                    hexagonBars->updateServoAngles(servoAngles);
                 }
             }, Qt::QueuedConnection);
         } else {

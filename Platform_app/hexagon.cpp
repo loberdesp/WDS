@@ -16,6 +16,19 @@ void HexagonBars::setBarValue(int index, float value) {
     update();  // Przerysuj widget
 }
 
+void HexagonBars::updateServoAngles(const QVector<int>& angles) {
+    if (angles.size() != 6)
+        return;
+
+    servoAngles = angles;  // Zapisz kąty
+
+    for (int i = 0; i < 6; ++i) {
+        // Przelicz kat [-90, 90] na wartosc [0, 1]
+        float normalized = qBound(0.0f, (angles[i] + 90.0f) / 180.0f, 1.0f);
+        setBarValue(i, normalized);
+    }
+}
+
 // Pobranie wartosci paska
 float HexagonBars::getBarValue(int index) const {
     return (index >= 0 && index < 6) ? barValues[index] : 0.0f;
@@ -94,6 +107,10 @@ void HexagonBars::drawBars(QPainter &painter) {
     QVector<float> barHeights;  // Wysokosci do efektu podniesienia
     QPointF center = QPointF(width() / 2, height() / 2);  // Srodek widgetu
 
+    QFont angleFont = painter.font();
+    angleFont.setPointSize(10);
+    painter.setFont(angleFont);
+
     for (int i = 0; i < 6; ++i) {
         float value = barValues[i];
         QPointF outerPoint = hexagonPoints[i];
@@ -128,6 +145,27 @@ void HexagonBars::drawBars(QPainter &painter) {
         painter.drawRect(barRect);  // Rysuj prostokat paska
 
         painter.restore();  // Przywroc poprzedni stan painter'a
+
+        // Pozycja końca paska
+        QPointF labelBase = outerPoint + direction * (barLength * value);
+
+        // Przesunięcie tekstu w kierunku wzrostu paska (czyli zgodnie z direction)
+        float textOffset = 15;  // Dystans od końca paska
+        QPointF labelPos = labelBase + direction * textOffset;
+
+        // Tekst kąta z ° (stopni)
+        QString angleText = (i < servoAngles.size()) ? QString::number(servoAngles[i]) + QChar(176) : "?";
+
+        // Wyśrodkowane rysowanie tekstu
+        QFont font("Arial", 10, QFont::Bold);
+        painter.setFont(font);
+        painter.setPen(Qt::white);
+
+        QFontMetrics fm(font);
+        QRectF textRect = fm.boundingRect(angleText);
+        textRect.moveCenter(labelPos);  // Wycentrowanie prostokąta na labelPos
+
+        painter.drawText(textRect, Qt::AlignCenter, angleText);
     }
 
     // Rysuj szesciokat laczacy konce paskow
